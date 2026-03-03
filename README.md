@@ -3,7 +3,7 @@
 A powerful and modern **All-In-One Calculator Web Application** built using HTML, CSS, and JavaScript.  
 This application combines multiple calculators into one single platform to perform daily mathematical, financial, and electrical calculations easily.
 
-🔗 Live Website: https://all-in-one-calculator-five.vercel.app  
+🔗 Live Website: https://megacalc-studio.vercel.app/  
 📦 GitHub Repository: https://github.com/vanakanagarakesh-lab/all-in-one-calculator  
 
 ---
