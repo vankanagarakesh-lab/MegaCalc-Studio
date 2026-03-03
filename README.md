@@ -4,6 +4,8 @@ A powerful and modern **All-In-One Calculator Web Application** built using HTML
 This application combines multiple calculators into one single platform to perform daily mathematical, financial, and electrical calculations easily.
 
 🔗 Live Website: https://megacalc-studio.vercel.app/  
+or
+https://megacalc-studio.netlify.app
 📦 GitHub Repository: https://github.com/vankanagarakesh-lab/MegaCalc-Studio
 
 ---
