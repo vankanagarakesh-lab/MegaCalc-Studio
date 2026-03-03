@@ -1,184 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Trigonometric Graph (Scaled Axes)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis Wave Engine | Full Suite 2026</title>
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --accent: #ff007f;
+            --bg: #0b0e14;
+            --card: #161b22;
+            --text: #e6edf3;
+        }
 
-<style>
-body {
-  margin: 0;
-  background: #0f1115;
-  font-family: Arial;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: white;
-}
+        body {
+            margin: 0; background: var(--bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; color: var(--text); overflow: hidden;
+        }
 
-.app {
-  width: 100%;
-  max-width: 420px;
-  height: 100vh;
-  background: #15181e;
-  padding: 12px;
-}
+        .app-container {
+            width: 95vw; max-width: 900px;
+            background: var(--card); padding: 25px;
+            border-radius: 24px; box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
 
-canvas {
-  background: white;
-  display: block;
-  margin: 10px auto;
-  border-radius: 8px;
-}
+        .canvas-container {
+            position: relative; background: #000;
+            border-radius: 16px; overflow: hidden;
+            border: 1px solid #30363d; cursor: grab;
+        }
 
-input, select, button {
-  width: 100%;
-  padding: 8px;
-  margin-top: 6px;
-  border-radius: 6px;
-  border: none;
-  font-size: 14px;
-}
+        .canvas-container:active { cursor: grabbing; }
 
-input, select {
-  background: #1e222b;
-  color: white;
-}
+        canvas { display: block; }
 
-button {
-  background: #2f80ed;
-  color: white;
-}
+        .controls {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px; margin-top: 25px;
+        }
 
-.info {
-  background: #1e222b;
-  padding: 8px;
-  margin-top: 8px;
-  border-radius: 6px;
-  font-size: 12px;
-}
-</style>
+        .control-box { 
+            background: rgba(255,255,255,0.03); 
+            padding: 12px; 
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        label { 
+            font-size: 11px; color: #8b949e; 
+            text-transform: uppercase; letter-spacing: 1px;
+            display: block; margin-bottom: 8px;
+        }
+
+        select, input[type="range"] {
+            width: 100%; cursor: pointer;
+            background: #0b0e14;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+
+        input[type="range"] { accent-color: var(--primary); background: transparent; border: none;}
+
+        .btn-row { 
+            grid-column: 1 / -1; 
+            display: flex; gap: 10px; 
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1; padding: 14px; border-radius: 10px; border: none;
+            font-weight: bold; cursor: pointer; transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-play { background: var(--primary); color: #000; }
+        .btn-reset { background: #30363d; color: white; }
+        
+        .val-display { float: right; color: var(--primary); font-family: monospace; }
+    </style>
 </head>
-
 <body>
 
-<div class="app">
-<h3 style="text-align:center;">Trigonometric Graph</h3>
+<div class="app-container">
+    <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom:15px;">
+        <div>
+            <h2 style="margin:0; font-weight:300;">Jarvis <span style="color:var(--primary)">Omni-Wave</span></h2>
+            <p style="margin:0; font-size:12px; color:#8b949e;">Full Trigonometric Suite • Pan/Zoom Enabled</p>
+        </div>
+        <div id="stats" style="font-family: monospace; color: var(--primary); font-size: 13px;">X: 0.00 | Y: 0.00</div>
+    </div>
 
-<canvas id="graph" width="360" height="360"></canvas>
+    <div class="canvas-container" id="view">
+        <canvas id="graph"></canvas>
+    </div>
 
-<select id="func">
-  <option value="sin">y = sin x</option>
-  <option value="cos">y = cos x</option>
-  <option value="tan">y = tan x</option>
-  <option value="cot">y = cot x</option>
-  <option value="sec">y = sec x</option>
-  <option value="cosec">y = cosec x</option>
-</select>
+    <div class="controls">
+        <div class="control-box">
+            <label>Function</label>
+            <select id="func">
+                <option value="sin">Sine (sin)</option>
+                <option value="cos">Cosine (cos)</option>
+                <option value="tan">Tangent (tan)</option>
+                <option value="csc">Cosecant (csc)</option>
+                <option value="sec">Secant (sec)</option>
+                <option value="cot">Cotangent (cot)</option>
+            </select>
+        </div>
 
-<input id="xStart" placeholder="Start x (e.g. -6.28)">
-<input id="xEnd" placeholder="End x (e.g. 6.28)">
-<input id="step" placeholder="Step (e.g. 0.01)">
+        <div class="control-box">
+            <label>Amplitude <span class="val-display" id="ampTxt">1.0</span></label>
+            <input type="range" id="amp" min="0.1" max="5" step="0.1" value="1">
+        </div>
 
-<button onclick="drawGraph()">Draw Graph</button>
+        <div class="control-box">
+            <label>Frequency <span class="val-display" id="freqTxt">1.0</span></label>
+            <input type="range" id="freq" min="0.1" max="10" step="0.1" value="1">
+        </div>
 
-<div class="info">
-<b>Explanation:</b><br>
-• X-axis scale from Start to End value<br>
-• Y-axis scale from -1 to +1<br>
-• Uses radians (π ≈ 3.14)<br>
-• No zoom or pan
-</div>
+        <div class="control-box">
+            <label>Anim Speed <span class="val-display" id="speedTxt">0.05</span></label>
+            <input type="range" id="speed" min="0" max="0.3" step="0.01" value="0.05">
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-play" id="playBtn">⏯ START WAVE</button>
+            <button class="btn-reset" onclick="resetCamera()">RESET VIEW</button>
+        </div>
+    </div>
 </div>
 
 <script>
-const canvas = document.getElementById("graph");
-const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById("graph");
+    const ctx = canvas.getContext("2d");
+    const view = document.getElementById("view");
+    const stats = document.getElementById("stats");
 
-function drawAxes(xMin, xMax) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let width, height;
+    let offset = { x: 0, y: 0 };
+    let zoom = 60; 
+    let isDragging = false;
+    let lastMouse = { x: 0, y: 0 };
+    let waveOffset = 0; 
+    let animating = false;
 
-  const midX = canvas.width / 2;
-  const midY = canvas.height / 2;
-
-  // Draw axes
-  ctx.strokeStyle = "black";
-  ctx.beginPath();
-  ctx.moveTo(0, midY);
-  ctx.lineTo(canvas.width, midY);
-  ctx.moveTo(midX, 0);
-  ctx.lineTo(midX, canvas.height);
-  ctx.stroke();
-
-  ctx.fillStyle = "black";
-  ctx.font = "10px Arial";
-
-  // X-axis scale
-  const xStep = (xMax - xMin) / 6;
-  for (let i = 0; i <= 6; i++) {
-    let xVal = (xMin + i * xStep).toFixed(2);
-    let xPos = (i / 6) * canvas.width;
-    ctx.fillText(xVal, xPos, midY + 12);
-  }
-
-  // Y-axis scale
-  const yValues = [-1, -0.5, 0, 0.5, 1];
-  yValues.forEach(v => {
-    let yPos = midY - v * (canvas.height / 4);
-    ctx.fillText(v, midX + 4, yPos);
-  });
-}
-
-function drawGraph() {
-  const f = document.getElementById("func").value;
-  const xMin = Number(xStart.value);
-  const xMax = Number(xEnd.value);
-  const step = Number(stepInput.value);
-
-  drawAxes(xMin, xMax);
-
-  const scaleX = canvas.width / (xMax - xMin);
-  const scaleY = canvas.height / 4;
-
-  ctx.strokeStyle = "red";
-  ctx.beginPath();
-
-  let first = true;
-
-  for (let x = xMin; x <= xMax; x += step) {
-    let y = trig(f, x);
-    if (!isFinite(y)) {
-      first = true;
-      continue;
+    function init() {
+        width = view.clientWidth;
+        height = 400;
+        canvas.width = width;
+        canvas.height = height;
     }
 
-    let px = (x - xMin) * scaleX;
-    let py = canvas.height / 2 - y * scaleY;
+    function render() {
+        ctx.fillStyle = "#0b1114";
+        ctx.fillRect(0, 0, width, height);
 
-    if (first) {
-      ctx.moveTo(px, py);
-      first = false;
-    } else {
-      ctx.lineTo(px, py);
+        const centerX = width / 2 + offset.x;
+        const centerY = height / 2 + offset.y;
+
+        drawGrid(centerX, centerY);
+        drawWave(centerX, centerY);
+
+        if (animating) {
+            waveOffset += parseFloat(document.getElementById("speed").value);
+        }
+
+        // Label updates
+        document.getElementById("ampTxt").innerText = document.getElementById("amp").value;
+        document.getElementById("freqTxt").innerText = document.getElementById("freq").value;
+        document.getElementById("speedTxt").innerText = document.getElementById("speed").value;
+
+        requestAnimationFrame(render);
     }
-  }
 
-  ctx.stroke();
-}
+    function drawGrid(mx, my) {
+        ctx.lineWidth = 1;
+        ctx.font = "10px Inter, sans-serif";
+        const step = (zoom < 40) ? Math.PI : Math.PI / 2;
+        const xStart = Math.floor((-width/2 - offset.x) / (zoom * step)) * step;
+        const xEnd = Math.ceil((width/2 - offset.x) / (zoom * step)) * step;
 
-function trig(type, x) {
-  switch(type) {
-    case "sin": return Math.sin(x);
-    case "cos": return Math.cos(x);
-    case "tan": return Math.tan(x);
-    case "cot": return 1 / Math.tan(x);
-    case "sec": return 1 / Math.cos(x);
-    case "cosec": return 1 / Math.sin(x);
-  }
-}
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+        for (let x = xStart; x <= xEnd; x += step) {
+            let px = mx + x * zoom;
+            ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, height); ctx.stroke();
+            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            if (Math.abs(x) > 0.01) ctx.fillText((x / Math.PI).toFixed(1) + "π", px + 4, my + 15);
+        }
 
-const stepInput = document.getElementById("step");
+        for (let y = -10; y <= 10; y++) {
+            let py = my - y * zoom;
+            ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(width, py); ctx.stroke();
+            if(y !== 0) ctx.fillText(y, mx + 5, py - 2);
+        }
+
+        ctx.strokeStyle = "rgba(0, 242, 254, 0.3)";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, my); ctx.lineTo(width, my); ctx.moveTo(mx, 0); ctx.lineTo(mx, height); ctx.stroke();
+    }
+
+    function drawWave(mx, my) {
+        const type = document.getElementById("func").value;
+        const amp = parseFloat(document.getElementById("amp").value);
+        const freq = parseFloat(document.getElementById("freq").value);
+
+        ctx.strokeStyle = "#00f2fe";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "rgba(0, 242, 254, 0.8)";
+        
+        ctx.beginPath();
+        let first = true;
+        let lastY = 0;
+
+        for (let px = 0; px < width; px++) {
+            const x = (px - mx) / zoom;
+            const y = mathFunc(type, (x * freq) - waveOffset) * amp;
+            const py = my - y * zoom;
+
+            // ASYMPTOTE PROTECTION:
+            // If the difference between current Y and last Y is massive, it's a jump (like in tan)
+            // We break the path to prevent the "vertical line" glitch.
+            const jump = Math.abs(py - lastY) > height / 2;
+
+            if (!isFinite(py) || Math.abs(y) > 30 || jump) {
+                ctx.stroke();
+                ctx.beginPath();
+                first = true;
+            } else {
+                if (first) {
+                    ctx.moveTo(px, py);
+                    first = false;
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            lastY = py;
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    function mathFunc(type, x) {
+        switch(type) {
+            case "sin": return Math.sin(x);
+            case "cos": return Math.cos(x);
+            case "tan": return Math.tan(x);
+            case "csc": return 1 / Math.sin(x);
+            case "sec": return 1 / Math.cos(x);
+            case "cot": return 1 / Math.tan(x);
+        }
+    }
+
+    view.onmousedown = (e) => { isDragging = true; lastMouse = { x: e.clientX, y: e.clientY }; view.style.cursor = "grabbing";};
+    window.onmouseup = () => { isDragging = false; view.style.cursor = "grab"; };
+    window.onmousemove = (e) => {
+        if (isDragging) {
+            offset.x += e.clientX - lastMouse.x;
+            offset.y += e.clientY - lastMouse.y;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        }
+        const rect = canvas.getBoundingClientRect();
+        const curX = ((e.clientX - rect.left) - (width/2 + offset.x)) / zoom;
+        const curY = (height/2 + offset.y - (e.clientY - rect.top)) / zoom;
+        stats.innerText = `X: ${curX.toFixed(2)} | Y: ${curY.toFixed(2)}`;
+    };
+
+    view.onwheel = (e) => {
+        e.preventDefault();
+        zoom *= (e.deltaY > 0 ? 0.9 : 1.1);
+        zoom = Math.max(5, Math.min(1000, zoom));
+    };
+
+    function resetCamera() { offset = { x: 0, y: 0 }; zoom = 60; waveOffset = 0; }
+
+    document.getElementById("playBtn").onclick = function() {
+        animating = !animating;
+        this.innerText = animating ? "⏸ STOP WAVE" : "⏯ START WAVE";
+        this.style.background = animating ? "var(--accent)" : "var(--primary)";
+        this.style.color = animating ? "white" : "black";
+    };
+
+    window.onresize = init;
+    init();
+    render();
 </script>
 
 </body>

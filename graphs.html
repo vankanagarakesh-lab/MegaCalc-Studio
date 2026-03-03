@@ -1,186 +1,282 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Perfect Scaled Graph</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Perfect Point Grapher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root { --accent: #00d2ff; --bg: #0f1115; --panel: #1c1f26; --input-bg: #2a2e38; }
+        
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            font-family: -apple-system, system-ui, sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-<style>
-body {
-  margin: 0;
-  background: #0f1115;
-  font-family: Arial;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+        .mobile-app {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-.app {
-  width: 100%;
-  max-width: 420px;
-  height: 100vh;
-  background: #15181e;
-  padding: 10px;
-}
+        /* Fixed Graph Area */
+        .graph-area {
+            position: relative;
+            background: #000;
+            flex: 1; /* Takes up all available space */
+            touch-action: none;
+            overflow: hidden;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* Floating Badge */
+        #coord-badge {
+            position: absolute;
+            background: white;
+            color: #000;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 800;
+            pointer-events: none;
+            display: none;
+            z-index: 101;
+            box-shadow: 0 0 25px var(--accent);
+            transform: translate(-50%, -150%);
+            border: 2px solid var(--accent);
+            white-space: nowrap;
+        }
 
-canvas {
-  background: white;
-  display: block;
-  margin: auto;
-  border-radius: 10px;
-}
+        /* Bottom Control Panel */
+        .controls {
+            padding: 20px;
+            background: var(--panel);
+            border-radius: 25px 25px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            z-index: 110;
+        }
 
-select, input, button {
-  width: 100%;
-  margin-top: 8px;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  font-size: 16px;
-}
+        label { color: var(--accent); font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 1px;}
+        
+        select, input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 2px solid #444;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            margin-bottom: 12px;
+        }
 
-select, input {
-  background: #1e222b;
-  color: white;
-}
+        .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 
-button {
-  background: #2f80ed;
-  color: white;
-}
+        button.primary-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            background: var(--accent);
+            color: #000;
+            font-size: 15px;
+            cursor: pointer;
+        }
 
-.info {
-  margin-top: 10px;
-  background: #1e222b;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-</style>
+        .hint { font-size: 11px; color: #555; text-align: center; margin-top: 15px; }
+    </style>
 </head>
-
 <body>
 
-<div class="app">
-  <h2 style="text-align:center;">Perfect Graph</h2>
+<div class="mobile-app">
+    <div class="graph-area" id="g-container">
+        <div id="coord-badge"></div>
+        <canvas id="c"></canvas>
+    </div>
 
-  <canvas id="canvas" width="360" height="360"></canvas>
+    <div class="controls">
+        <label>Equation Shape</label>
+        <select id="type" onchange="redraw()">
+            <option value="linear">Linear (y = mx + c)</option>
+            <option value="quadratic">Quadratic (y = ax²)</option>
+            <option value="cubic">Cubic (y = ax³)</option>
+            <option value="constant">Constant (y = c)</option>
+            <option value="identity">Identity (y = x)</option>
+            <option value="modulus">Modulus (y = |x|)</option>
+        </select>
 
-  <select id="type">
-    <option value="linear">Linear (y = mx + c)</option>
-    <option value="quadratic">Quadratic (y = ax²)</option>
-    <option value="cubic">Cubic (y = ax³)</option>
-    <option value="constant">Constant (y = c)</option>
-    <option value="identity">Identity (y = x)</option>
-    <option value="modulus">Modulus (y = |x|)</option>
-  </select>
+        <div class="param-grid">
+            <div class="input-box">
+                <label>Multiplier (a)</label>
+                <input type="number" id="a" value="1" step="0.5" oninput="redraw()">
+            </div>
+            <div class="input-box">
+                <label>Constant (c)</label>
+                <input type="number" id="c_val" value="0" oninput="redraw()">
+            </div>
+        </div>
 
-  <input id="a" placeholder="Enter a or m">
-  <input id="c" placeholder="Enter c">
-
-  <button onclick="draw()">Draw Graph</button>
-
-  <div id="info" class="info"></div>
+        <button class="primary-btn" onclick="resetView()">Reset & Center Graph</button>
+        <div class="hint">Slide finger on graph for <b>(x, y) coordinates</b></div>
+    </div>
 </div>
 
 <script>
-const canvas = document.getElementById("canvas");
+const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
-const W = canvas.width;
-const H = canvas.height;
+const typeSelect = document.getElementById("type");
+const valA = document.getElementById("a");
+const valC = document.getElementById("c_val");
+const badge = document.getElementById("coord-badge");
 
-function draw() {
-  const type = document.getElementById("type").value;
-  const a = Number(document.getElementById("a").value);
-  const c = Number(document.getElementById("c").value);
+let state = {
+    scale: 50,
+    offX: 0,
+    offY: 0,
+    dragging: false,
+    lastMouse: { x: 0, y: 0 },
+    mousePos: { x: -1, y: -1 }
+};
 
-  let points = [];
-  for (let x = -20; x <= 20; x += 0.1) {
-    points.push({ x, y: calc(type, x, a, c) });
-  }
-
-  autoScale(points);
+function init() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    state.offX = canvas.width / 2;
+    state.offY = canvas.height / 2;
+    redraw();
 }
 
-function calc(type, x, a, c) {
-  if (type === "linear") return a * x + c;
-  if (type === "quadratic") return a * x * x;
-  if (type === "cubic") return a * x * x * x;
-  if (type === "constant") return c;
-  if (type === "identity") return x;
-  if (type === "modulus") return Math.abs(x);
+function calculate(x) {
+    const a = parseFloat(valA.value) || 0;
+    const c = parseFloat(valC.value) || 0;
+    const type = typeSelect.value;
+    if (type === "linear") return a * x + c;
+    if (type === "quadratic") return a * x * x + c;
+    if (type === "cubic") return a * x * x * x + c;
+    if (type === "constant") return c;
+    if (type === "identity") return x;
+    if (type === "modulus") return Math.abs(x) * a + c;
+    return 0;
 }
 
-function autoScale(points) {
-  const ys = points.map(p => p.y);
-  const max = Math.max(...ys.map(Math.abs));
+function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const { scale, offX, offY, mousePos } = state;
 
-  const step = chooseStep(max);
-  const scale = (H / 2 - 30) / (step * 5);
+    // Draw Grid
+    ctx.strokeStyle = "#1a1a1a"; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = offX % scale; x < canvas.width; x += scale) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+    for (let y = offY % scale; y < canvas.height; y += scale) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+    ctx.stroke();
 
-  drawAxes(step, scale);
-  plot(points, scale);
+    // Draw Axes
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(0, offY); ctx.lineTo(canvas.width, offY); 
+    ctx.moveTo(offX, 0); ctx.lineTo(offX, canvas.height);
+    ctx.stroke();
 
-  document.getElementById("info").innerHTML =
-    `<b>Scale explanation:</b><br>
-     Each grid = ${step} units<br>
-     Auto-adjusted for best fit`;
-}
-
-function chooseStep(max) {
-  if (max <= 10) return 1;
-  if (max <= 20) return 2;
-  if (max <= 50) return 5;
-  if (max <= 100) return 10;
-  return 20;
-}
-
-function drawAxes(step, scale) {
-  ctx.clearRect(0, 0, W, H);
-  ctx.strokeStyle = "black";
-
-  // X axis
-  ctx.beginPath();
-  ctx.moveTo(0, H / 2);
-  ctx.lineTo(W, H / 2);
-  ctx.stroke();
-
-  // Y axis
-  ctx.beginPath();
-  ctx.moveTo(W / 2, 0);
-  ctx.lineTo(W / 2, H);
-  ctx.stroke();
-
-  ctx.fillStyle = "black";
-  ctx.font = "12px Arial";
-
-  for (let i = -5; i <= 5; i++) {
-    const y = H / 2 - i * step * scale;
-    ctx.fillText(i * step, W / 2 + 5, y + 4);
-  }
-}
-
-function plot(points, scale) {
-  ctx.strokeStyle = "red";
-  ctx.beginPath();
-  let first = true;
-
-  points.forEach(p => {
-    const px = W / 2 + p.x * scale;
-    const py = H / 2 - p.y * scale;
-    if (first) {
-      ctx.moveTo(px, py);
-      first = false;
-    } else {
-      ctx.lineTo(px, py);
+    // Plot Graph
+    ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 4; ctx.lineJoin = "round";
+    ctx.shadowBlur = 12; ctx.shadowColor = "#00d2ff";
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px < canvas.width; px++) {
+        let x = (px - offX) / scale;
+        let y = calculate(x);
+        let py = offY - (y * scale);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else { if (py > -500 && py < canvas.height + 500) ctx.lineTo(px, py); }
     }
-  });
+    ctx.stroke();
+    ctx.shadowBlur = 0;
 
-  ctx.stroke();
+    // Dynamic Point Tracker
+    if (mousePos.x !== -1 && !state.dragging) {
+        const mx = (mousePos.x - offX) / scale;
+        const my = calculate(mx);
+        const py = offY - (my * scale);
+
+        // Projection Lines
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = "rgba(255,255,255,0.3)";
+        ctx.beginPath();
+        ctx.moveTo(mousePos.x, py); ctx.lineTo(offX, py); // To Y
+        ctx.moveTo(mousePos.x, py); ctx.lineTo(mousePos.x, offY); // To X
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Intersection Points on Axes
+        ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.arc(offX, py, 4, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(mousePos.x, offY, 4, 0, 7); ctx.fill();
+
+        // Main Tracking Dot
+        ctx.fillStyle = "#fff";
+        ctx.shadowBlur = 15; ctx.shadowColor = "#fff";
+        ctx.beginPath(); ctx.arc(mousePos.x, py, 8, 0, 7); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Perfect Badge
+        badge.style.display = "block";
+        badge.style.left = mousePos.x + "px";
+        badge.style.top = py + "px";
+        badge.innerHTML = `(${mx.toFixed(2)}, ${my.toFixed(2)})`;
+    } else {
+        badge.style.display = "none";
+    }
 }
-</script>
 
+function getPos(e) {
+    const t = e.touches ? e.touches[0] : e;
+    const rect = canvas.getBoundingClientRect();
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
+
+canvas.onmousedown = canvas.ontouchstart = (e) => {
+    state.dragging = true;
+    const pos = getPos(e);
+    state.lastMouse = { x: pos.x, y: pos.y };
+};
+
+window.onmousemove = window.ontouchmove = (e) => {
+    const pos = getPos(e);
+    if (state.dragging) {
+        state.offX += pos.x - state.lastMouse.x;
+        state.offY += pos.y - state.lastMouse.y;
+        state.lastMouse = { x: pos.x, y: pos.y };
+        state.mousePos = { x: -1, y: -1 };
+    } else {
+        state.mousePos = pos;
+    }
+    redraw();
+};
+
+window.onmouseup = window.ontouchend = () => state.dragging = false;
+
+canvas.onwheel = (e) => {
+    e.preventDefault();
+    state.scale *= (e.deltaY < 0 ? 1.1 : 0.9);
+    redraw();
+};
+
+function resetView() {
+    state.scale = 50;
+    state.offX = canvas.width / 2;
+    state.offY = canvas.height / 2;
+    redraw();
+}
+
+window.onresize = init;
+init();
+</script>
 </body>
 </html>

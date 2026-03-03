@@ -1,0 +1,2587 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electrical Engineering Calculator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Space Grotesk', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .category-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      transition: all 0.3s ease;
+    }
+    .category-card:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px -10px rgba(56, 189, 248, 0.3);
+    }
+    .calc-input {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      transition: all 0.2s ease;
+    }
+    .calc-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+      outline: none;
+    }
+    .calc-btn {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      transition: all 0.2s ease;
+    }
+    .calc-btn:hover {
+      background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+      transform: scale(1.02);
+    }
+    .result-box {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .formula-box {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+    .explanation-box {
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.5); border-radius: 3px; }
+    .nav-item {
+      transition: all 0.2s ease;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    .back-btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+    }
+    @keyframes flowRight {
+      0% { transform: translateX(-20px); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes flowDown {
+      0% { transform: translateY(-20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+      50% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+    }
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes counter-up {
+      from { content: '0'; }
+      to { content: attr(data-value); }
+    }
+    @keyframes bar-fill {
+      from { width: 0%; }
+      to { width: var(--fill-width, 100%); }
+    }
+    .input-flow {
+      animation: flowRight 0.6s ease-out forwards;
+    }
+    .process-glow {
+      animation: pulse-glow 2s infinite;
+    }
+    .spinner {
+      animation: spin-slow 2s linear infinite;
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(56, 189, 248, 0.3);
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+    }
+    .result-animate {
+      animation: flowDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .progress-bar {
+      animation: bar-fill 1.2s ease-out forwards;
+      background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+    }
+    .value-counter {
+      font-variant-numeric: tabular-nums;
+    }
+    .circuit-diagram {
+      position: relative;
+      height: 200px;
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .component {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    .wire {
+      position: absolute;
+      background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+      height: 2px;
+    }
+    .energy-flow {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, #fbbf24, transparent);
+      border-radius: 50%;
+      animation: flowPath 2s linear infinite;
+    }
+    @keyframes flowPath {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .heat-map {
+      position: relative;
+      height: 30px;
+      margin: 10px 0;
+      background: linear-gradient(90deg, #10b981, #fbbf24, #ef4444);
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    .heat-indicator {
+      position: absolute;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      animation: heatFlow 2s ease-in-out infinite;
+    }
+    @keyframes heatFlow {
+      0%, 100% { left: 0%; width: 10%; }
+      50% { left: 45%; width: 10%; }
+    }
+    .wave-animation {
+      position: relative;
+      height: 60px;
+      margin: 20px 0;
+    }
+    .sine-wave {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    .harmonic-bar {
+      position: absolute;
+      bottom: 0;
+      background: linear-gradient(180deg, #0ea5e9, #38bdf8);
+      border-radius: 4px 4px 0 0;
+      animation: harmonicPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes harmonicPulse {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(1.3); }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-slate-900 text-slate-100 overflow-auto">
+  <div id="app" class="min-h-full w-full"><!-- Header -->
+   <header class="bg-slate-800/80 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+     <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+       <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center"><span class="text-xl">⚡</span>
+       </div>
+       <div>
+        <h1 id="main-title" class="text-xl font-bold text-white">Electrical Engineering Calculator</h1>
+        <p id="subtitle" class="text-xs text-slate-400">Complete toolkit for electrical calculations</p>
+       </div>
+      </div><button id="home-btn" class="back-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hidden"> ← Back to Categories </button>
+     </div>
+    </div>
+   </header><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Categories Grid -->
+    <div id="categories-view" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    </div><!-- Calculator View -->
+    <div id="calculator-view" class="hidden">
+     <div id="calc-content"></div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="bg-slate-800/50 border-t border-slate-700 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+     <p>© 2024 Electrical Engineering Calculator | All formulas based on standard electrical engineering principles</p>
+    </div>
+   </footer>
+  </div>
+  <script>
+    // Configuration
+    const defaultConfig = {
+      main_title: 'Electrical Engineering Calculator',
+      subtitle: 'Complete toolkit for electrical calculations',
+      background_color: '#0f172a',
+      primary_color: '#38bdf8',
+      text_color: '#f1f5f9',
+      accent_color: '#10b981',
+      secondary_color: '#1e293b'
+    };
+
+    // Calculator Categories Data
+    const categories = [
+      {
+        id: 'basic-laws',
+        icon: '📐',
+        title: 'Basic Electrical Laws',
+        description: 'Ohm\'s Law, Kirchhoff\'s Laws, Coulomb\'s Law',
+        calculators: [
+          {
+            id: 'ohms-law',
+            name: 'Ohm\'s Law Calculator',
+            formula: 'V = I × R',
+            explanation: 'Ohm\'s Law states that the current through a conductor between two points is directly proportional to the voltage across the two points. It is one of the most fundamental laws in electrical engineering, discovered by Georg Ohm in 1827.',
+            variables: [
+              { id: 'voltage', name: 'Voltage (V)', unit: 'Volts', symbol: 'V' },
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'resistance', name: 'Resistance (R)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs, solve) => {
+              if (solve === 'voltage') return inputs.current * inputs.resistance;
+              if (solve === 'current') return inputs.voltage / inputs.resistance;
+              if (solve === 'resistance') return inputs.voltage / inputs.current;
+            }
+          },
+          {
+            id: 'power-law',
+            name: 'Electrical Power Calculator',
+            formula: 'P = V × I = I²R = V²/R',
+            explanation: 'Electrical power is the rate at which electrical energy is transferred by an electric circuit. Power can be calculated using voltage and current, or by using current and resistance, or voltage and resistance.',
+            variables: [
+              { id: 'power', name: 'Power (P)', unit: 'Watts', symbol: 'W' },
+              { id: 'voltage', name: 'Voltage (V)', unit: 'Volts', symbol: 'V' },
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'resistance', name: 'Resistance (R)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs, solve) => {
+              if (solve === 'power') {
+                if (inputs.voltage && inputs.current) return inputs.voltage * inputs.current;
+                if (inputs.current && inputs.resistance) return inputs.current * inputs.current * inputs.resistance;
+                if (inputs.voltage && inputs.resistance) return (inputs.voltage * inputs.voltage) / inputs.resistance;
+              }
+              if (solve === 'voltage') {
+                if (inputs.power && inputs.current) return inputs.power / inputs.current;
+                if (inputs.current && inputs.resistance) return inputs.current * inputs.resistance;
+              }
+              if (solve === 'current') {
+                if (inputs.power && inputs.voltage) return inputs.power / inputs.voltage;
+                if (inputs.voltage && inputs.resistance) return inputs.voltage / inputs.resistance;
+              }
+              if (solve === 'resistance') {
+                if (inputs.voltage && inputs.current) return inputs.voltage / inputs.current;
+                if (inputs.power && inputs.current) return inputs.power / (inputs.current * inputs.current);
+              }
+            }
+          },
+          {
+            id: 'coulombs-law',
+            name: 'Coulomb\'s Law Calculator',
+            formula: 'F = k × (q₁ × q₂) / r²',
+            explanation: 'Coulomb\'s Law quantifies the electrostatic force between two charged particles. The force is proportional to the product of the charges and inversely proportional to the square of the distance between them. k = 8.99 × 10⁹ N·m²/C²',
+            variables: [
+              { id: 'force', name: 'Force (F)', unit: 'Newtons', symbol: 'N' },
+              { id: 'q1', name: 'Charge 1 (q₁)', unit: 'Coulombs', symbol: 'C' },
+              { id: 'q2', name: 'Charge 2 (q₂)', unit: 'Coulombs', symbol: 'C' },
+              { id: 'distance', name: 'Distance (r)', unit: 'Meters', symbol: 'm' }
+            ],
+            calculate: (inputs, solve) => {
+              const k = 8.99e9;
+              if (solve === 'force') return k * (inputs.q1 * inputs.q2) / (inputs.distance * inputs.distance);
+              if (solve === 'distance') return Math.sqrt(k * inputs.q1 * inputs.q2 / inputs.force);
+              if (solve === 'q1') return (inputs.force * inputs.distance * inputs.distance) / (k * inputs.q2);
+              if (solve === 'q2') return (inputs.force * inputs.distance * inputs.distance) / (k * inputs.q1);
+            }
+          }
+        ]
+      },
+      {
+        id: 'dc-circuits',
+        icon: '🔋',
+        title: 'DC Circuit Calculations',
+        description: 'Series, Parallel, Theorems, Power Transfer',
+        calculators: [
+          {
+            id: 'series-resistance',
+            name: 'Series Resistance Calculator',
+            formula: 'R_total = R₁ + R₂ + R₃ + ...',
+            explanation: 'In a series circuit, resistors are connected end-to-end, and the total resistance is the sum of all individual resistances. Current is the same through all resistors, but voltage divides across them.',
+            variables: [
+              { id: 'r1', name: 'Resistance 1 (R₁)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r2', name: 'Resistance 2 (R₂)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r3', name: 'Resistance 3 (R₃)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r4', name: 'Resistance 4 (R₄)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              let total = 0;
+              if (inputs.r1) total += inputs.r1;
+              if (inputs.r2) total += inputs.r2;
+              if (inputs.r3) total += inputs.r3;
+              if (inputs.r4) total += inputs.r4;
+              return total;
+            },
+            resultLabel: 'Total Resistance'
+          },
+          {
+            id: 'parallel-resistance',
+            name: 'Parallel Resistance Calculator',
+            formula: '1/R_total = 1/R₁ + 1/R₂ + 1/R₃ + ...',
+            explanation: 'In a parallel circuit, resistors are connected across the same two points. The total resistance is always less than the smallest individual resistance. Voltage is the same across all resistors, but current divides.',
+            variables: [
+              { id: 'r1', name: 'Resistance 1 (R₁)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r2', name: 'Resistance 2 (R₂)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r3', name: 'Resistance 3 (R₃)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r4', name: 'Resistance 4 (R₄)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              let sum = 0;
+              if (inputs.r1) sum += 1/inputs.r1;
+              if (inputs.r2) sum += 1/inputs.r2;
+              if (inputs.r3) sum += 1/inputs.r3;
+              if (inputs.r4) sum += 1/inputs.r4;
+              return sum > 0 ? 1/sum : 0;
+            },
+            resultLabel: 'Total Resistance'
+          },
+          {
+            id: 'voltage-divider',
+            name: 'Voltage Divider Calculator',
+            formula: 'V_out = V_in × (R₂ / (R₁ + R₂))',
+            explanation: 'A voltage divider is a simple circuit that produces an output voltage that is a fraction of the input voltage. It consists of two resistors in series, and the output is taken across one of them.',
+            variables: [
+              { id: 'vin', name: 'Input Voltage (V_in)', unit: 'Volts', symbol: 'V' },
+              { id: 'r1', name: 'Resistance 1 (R₁)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r2', name: 'Resistance 2 (R₂)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              return inputs.vin * (inputs.r2 / (inputs.r1 + inputs.r2));
+            },
+            resultLabel: 'Output Voltage (V_out)'
+          },
+          {
+            id: 'current-divider',
+            name: 'Current Divider Calculator',
+            formula: 'I₁ = I_total × (R₂ / (R₁ + R₂))',
+            explanation: 'A current divider splits the input current between parallel branches inversely proportional to their resistances. The branch with lower resistance carries more current.',
+            variables: [
+              { id: 'itotal', name: 'Total Current (I_total)', unit: 'Amperes', symbol: 'A' },
+              { id: 'r1', name: 'Resistance 1 (R₁)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'r2', name: 'Resistance 2 (R₂)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              const i1 = inputs.itotal * (inputs.r2 / (inputs.r1 + inputs.r2));
+              const i2 = inputs.itotal * (inputs.r1 / (inputs.r1 + inputs.r2));
+              return { i1, i2 };
+            },
+            resultLabel: 'Branch Currents',
+            multiResult: true
+          },
+          {
+            id: 'battery-emf',
+            name: 'Battery EMF & Internal Resistance',
+            formula: 'V_terminal = EMF - I × r_internal',
+            explanation: 'Every real battery has internal resistance. The terminal voltage is less than the EMF when current flows. The voltage drop across internal resistance causes this difference.',
+            variables: [
+              { id: 'emf', name: 'EMF (ε)', unit: 'Volts', symbol: 'V' },
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'rinternal', name: 'Internal Resistance (r)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              return inputs.emf - (inputs.current * inputs.rinternal);
+            },
+            resultLabel: 'Terminal Voltage'
+          },
+          {
+            id: 'max-power-transfer',
+            name: 'Maximum Power Transfer',
+            formula: 'P_max = V²/(4R_L) when R_L = R_source',
+            explanation: 'Maximum power is transferred to a load when the load resistance equals the source resistance (including internal resistance). This is crucial in power electronics and RF design.',
+            variables: [
+              { id: 'vsource', name: 'Source Voltage (V)', unit: 'Volts', symbol: 'V' },
+              { id: 'rsource', name: 'Source Resistance (R_s)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              const pmax = (inputs.vsource * inputs.vsource) / (4 * inputs.rsource);
+              const rload = inputs.rsource;
+              return { pmax, rload };
+            },
+            resultLabel: 'Maximum Power & Optimal Load',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'ac-circuits',
+        icon: '〰️',
+        title: 'AC Circuit Calculations',
+        description: 'RMS, Reactance, Impedance, Power Factor',
+        calculators: [
+          {
+            id: 'rms-values',
+            name: 'RMS, Peak & Average Values',
+            formula: 'V_rms = V_peak / √2 ≈ 0.707 × V_peak',
+            explanation: 'RMS (Root Mean Square) is the effective value of AC that produces the same heating effect as DC. Peak value is the maximum amplitude. Average value for a full sine wave is 0.637 × Peak.',
+            variables: [
+              { id: 'vpeak', name: 'Peak Voltage (V_peak)', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const vrms = inputs.vpeak / Math.sqrt(2);
+              const vavg = inputs.vpeak * 0.637;
+              const vpeakToPeak = inputs.vpeak * 2;
+              return { vrms: vrms.toFixed(3), vavg: vavg.toFixed(3), vpp: vpeakToPeak.toFixed(3) };
+            },
+            resultLabel: 'AC Values',
+            multiResult: true
+          },
+          {
+            id: 'inductive-reactance',
+            name: 'Inductive Reactance (X_L)',
+            formula: 'X_L = 2πfL = ωL',
+            explanation: 'Inductive reactance is the opposition to AC current flow by an inductor. It increases with frequency. In an inductor, current lags voltage by 90°.',
+            variables: [
+              { id: 'frequency', name: 'Frequency (f)', unit: 'Hertz', symbol: 'Hz' },
+              { id: 'inductance', name: 'Inductance (L)', unit: 'Henries', symbol: 'H' }
+            ],
+            calculate: (inputs) => {
+              return 2 * Math.PI * inputs.frequency * inputs.inductance;
+            },
+            resultLabel: 'Inductive Reactance (X_L)'
+          },
+          {
+            id: 'capacitive-reactance',
+            name: 'Capacitive Reactance (X_C)',
+            formula: 'X_C = 1 / (2πfC)',
+            explanation: 'Capacitive reactance is the opposition to AC current flow by a capacitor. It decreases with frequency. In a capacitor, current leads voltage by 90°.',
+            variables: [
+              { id: 'frequency', name: 'Frequency (f)', unit: 'Hertz', symbol: 'Hz' },
+              { id: 'capacitance', name: 'Capacitance (C)', unit: 'Farads', symbol: 'F' }
+            ],
+            calculate: (inputs) => {
+              return 1 / (2 * Math.PI * inputs.frequency * inputs.capacitance);
+            },
+            resultLabel: 'Capacitive Reactance (X_C)'
+          },
+          {
+            id: 'impedance',
+            name: 'Impedance Calculator (RLC)',
+            formula: 'Z = √(R² + (X_L - X_C)²)',
+            explanation: 'Impedance is the total opposition to AC current flow in a circuit containing resistance and reactance. It combines resistance (real) and reactance (imaginary) components.',
+            variables: [
+              { id: 'resistance', name: 'Resistance (R)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'xl', name: 'Inductive Reactance (X_L)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'xc', name: 'Capacitive Reactance (X_C)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              const xnet = inputs.xl - inputs.xc;
+              const z = Math.sqrt(inputs.resistance * inputs.resistance + xnet * xnet);
+              const phase = Math.atan(xnet / inputs.resistance) * (180 / Math.PI);
+              return { z: z.toFixed(3), phase: phase.toFixed(2) };
+            },
+            resultLabel: 'Impedance & Phase Angle',
+            multiResult: true
+          },
+          {
+            id: 'power-factor',
+            name: 'Power Factor Calculator',
+            formula: 'PF = cos(φ) = R/Z = P/S',
+            explanation: 'Power factor is the ratio of real power to apparent power. It indicates how effectively electrical power is being used. A PF of 1 means all power is being used effectively.',
+            variables: [
+              { id: 'resistance', name: 'Resistance (R)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'impedance', name: 'Impedance (Z)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              const pf = inputs.resistance / inputs.impedance;
+              const angle = Math.acos(pf) * (180 / Math.PI);
+              return { pf: pf.toFixed(4), angle: angle.toFixed(2) };
+            },
+            resultLabel: 'Power Factor & Phase Angle',
+            multiResult: true
+          },
+          {
+            id: 'ac-power',
+            name: 'AC Power Triangle Calculator',
+            formula: 'S² = P² + Q²',
+            explanation: 'In AC circuits, power has three components: Real Power (P) in Watts does actual work, Reactive Power (Q) in VAR oscillates between source and load, and Apparent Power (S) in VA is the total power.',
+            variables: [
+              { id: 'voltage', name: 'Voltage (V_rms)', unit: 'Volts', symbol: 'V' },
+              { id: 'current', name: 'Current (I_rms)', unit: 'Amperes', symbol: 'A' },
+              { id: 'pf', name: 'Power Factor', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const s = inputs.voltage * inputs.current;
+              const p = s * inputs.pf;
+              const q = s * Math.sqrt(1 - inputs.pf * inputs.pf);
+              return { 
+                apparent: s.toFixed(2), 
+                real: p.toFixed(2), 
+                reactive: q.toFixed(2) 
+              };
+            },
+            resultLabel: 'Power Values',
+            multiResult: true
+          },
+          {
+            id: 'resonance',
+            name: 'Resonance Frequency Calculator',
+            formula: 'f_r = 1 / (2π√(LC))',
+            explanation: 'At resonance, inductive and capacitive reactances are equal, canceling each other. The circuit behaves as purely resistive with maximum current (series) or minimum current (parallel).',
+            variables: [
+              { id: 'inductance', name: 'Inductance (L)', unit: 'Henries', symbol: 'H' },
+              { id: 'capacitance', name: 'Capacitance (C)', unit: 'Farads', symbol: 'F' }
+            ],
+            calculate: (inputs) => {
+              return 1 / (2 * Math.PI * Math.sqrt(inputs.inductance * inputs.capacitance));
+            },
+            resultLabel: 'Resonance Frequency (f_r)'
+          }
+        ]
+      },
+      {
+        id: 'three-phase',
+        icon: '🔺',
+        title: 'Three-Phase Systems',
+        description: 'Star, Delta, Line & Phase Values',
+        calculators: [
+          {
+            id: 'star-connection',
+            name: 'Star (Y) Connection Calculator',
+            formula: 'V_L = √3 × V_ph, I_L = I_ph',
+            explanation: 'In star connection, three phases are connected to a common neutral point. Line voltage is √3 times phase voltage, while line current equals phase current. Used for distribution and motors.',
+            variables: [
+              { id: 'vph', name: 'Phase Voltage (V_ph)', unit: 'Volts', symbol: 'V' },
+              { id: 'iph', name: 'Phase Current (I_ph)', unit: 'Amperes', symbol: 'A' }
+            ],
+            calculate: (inputs) => {
+              const vl = inputs.vph * Math.sqrt(3);
+              const il = inputs.iph;
+              return { vl: vl.toFixed(2), il: il.toFixed(2) };
+            },
+            resultLabel: 'Line Values',
+            multiResult: true
+          },
+          {
+            id: 'delta-connection',
+            name: 'Delta (Δ) Connection Calculator',
+            formula: 'V_L = V_ph, I_L = √3 × I_ph',
+            explanation: 'In delta connection, three phases are connected in a closed loop. Line voltage equals phase voltage, while line current is √3 times phase current. Used for high-power motors and transformers.',
+            variables: [
+              { id: 'vph', name: 'Phase Voltage (V_ph)', unit: 'Volts', symbol: 'V' },
+              { id: 'iph', name: 'Phase Current (I_ph)', unit: 'Amperes', symbol: 'A' }
+            ],
+            calculate: (inputs) => {
+              const vl = inputs.vph;
+              const il = inputs.iph * Math.sqrt(3);
+              return { vl: vl.toFixed(2), il: il.toFixed(2) };
+            },
+            resultLabel: 'Line Values',
+            multiResult: true
+          },
+          {
+            id: 'three-phase-power',
+            name: 'Three-Phase Power Calculator',
+            formula: 'P = √3 × V_L × I_L × cos(φ)',
+            explanation: 'Total three-phase power is calculated using line voltage and current multiplied by √3 and power factor. This formula works for both star and delta connections.',
+            variables: [
+              { id: 'vl', name: 'Line Voltage (V_L)', unit: 'Volts', symbol: 'V' },
+              { id: 'il', name: 'Line Current (I_L)', unit: 'Amperes', symbol: 'A' },
+              { id: 'pf', name: 'Power Factor (cos φ)', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const p = Math.sqrt(3) * inputs.vl * inputs.il * inputs.pf;
+              const s = Math.sqrt(3) * inputs.vl * inputs.il;
+              const q = Math.sqrt(s*s - p*p);
+              return { real: p.toFixed(2), apparent: s.toFixed(2), reactive: q.toFixed(2) };
+            },
+            resultLabel: 'Three-Phase Power',
+            multiResult: true
+          },
+          {
+            id: 'pf-correction',
+            name: 'Power Factor Correction',
+            formula: 'Q_c = P × (tan(φ₁) - tan(φ₂))',
+            explanation: 'Power factor correction improves efficiency by adding capacitors to reduce reactive power. This reduces current, line losses, and electricity costs while freeing up system capacity.',
+            variables: [
+              { id: 'realpower', name: 'Real Power (P)', unit: 'kW', symbol: 'kW' },
+              { id: 'currentpf', name: 'Current Power Factor', unit: '', symbol: '' },
+              { id: 'targetpf', name: 'Target Power Factor', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const phi1 = Math.acos(inputs.currentpf);
+              const phi2 = Math.acos(inputs.targetpf);
+              const qc = inputs.realpower * (Math.tan(phi1) - Math.tan(phi2));
+              return { qc: qc.toFixed(2) };
+            },
+            resultLabel: 'Required Reactive Power (kVAR)',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'power-energy',
+        icon: '⚡',
+        title: 'Electrical Power & Energy',
+        description: 'Active, Reactive, Apparent Power, Bills',
+        calculators: [
+          {
+            id: 'energy-consumption',
+            name: 'Energy Consumption Calculator',
+            formula: 'E = P × t (kWh)',
+            explanation: 'Electrical energy is power consumed over time. One kilowatt-hour (kWh) is the energy used by a 1000W device running for 1 hour. This is what electricity bills are based on.',
+            variables: [
+              { id: 'power', name: 'Power (P)', unit: 'Watts', symbol: 'W' },
+              { id: 'hours', name: 'Time (t)', unit: 'Hours', symbol: 'h' }
+            ],
+            calculate: (inputs) => {
+              const kwh = (inputs.power * inputs.hours) / 1000;
+              return kwh;
+            },
+            resultLabel: 'Energy (kWh)'
+          },
+          {
+            id: 'electricity-bill',
+            name: 'Electricity Bill Calculator',
+            formula: 'Cost = kWh × Rate',
+            explanation: 'Calculate your electricity bill based on energy consumption and utility rate. Different appliances have different power ratings and usage patterns affecting the total bill.',
+            variables: [
+              { id: 'kwh', name: 'Energy Consumed (kWh)', unit: 'kWh', symbol: 'kWh' },
+              { id: 'rate', name: 'Rate per kWh', unit: 'Currency', symbol: '$' }
+            ],
+            calculate: (inputs) => {
+              return (inputs.kwh * inputs.rate).toFixed(2);
+            },
+            resultLabel: 'Total Cost'
+          },
+          {
+            id: 'demand-factor',
+            name: 'Demand Factor Calculator',
+            formula: 'DF = Maximum Demand / Total Connected Load',
+            explanation: 'Demand factor is the ratio of maximum demand to total connected load. It\'s always ≤1 since not all loads operate simultaneously at full capacity. Used for sizing electrical systems.',
+            variables: [
+              { id: 'maxdemand', name: 'Maximum Demand', unit: 'kW', symbol: 'kW' },
+              { id: 'connectedload', name: 'Total Connected Load', unit: 'kW', symbol: 'kW' }
+            ],
+            calculate: (inputs) => {
+              return (inputs.maxdemand / inputs.connectedload).toFixed(3);
+            },
+            resultLabel: 'Demand Factor'
+          },
+          {
+            id: 'load-factor',
+            name: 'Load Factor Calculator',
+            formula: 'LF = Average Load / Maximum Demand',
+            explanation: 'Load factor indicates how efficiently the electrical system is being used. Higher load factor means more consistent power usage, which is more economical for utilities.',
+            variables: [
+              { id: 'avgload', name: 'Average Load', unit: 'kW', symbol: 'kW' },
+              { id: 'maxdemand', name: 'Maximum Demand', unit: 'kW', symbol: 'kW' }
+            ],
+            calculate: (inputs) => {
+              const lf = inputs.avgload / inputs.maxdemand;
+              return { lf: lf.toFixed(3), percent: (lf * 100).toFixed(1) };
+            },
+            resultLabel: 'Load Factor',
+            multiResult: true
+          },
+          {
+            id: 'diversity-factor',
+            name: 'Diversity Factor Calculator',
+            formula: 'Diversity Factor = Sum of Individual Max Demands / Coincident Max Demand',
+            explanation: 'Diversity factor accounts for the fact that different loads reach their maximum demand at different times. It\'s always ≥1 and helps in sizing distribution systems economically.',
+            variables: [
+              { id: 'sumdemands', name: 'Sum of Max Demands', unit: 'kW', symbol: 'kW' },
+              { id: 'coincidentdemand', name: 'Coincident Max Demand', unit: 'kW', symbol: 'kW' }
+            ],
+            calculate: (inputs) => {
+              return (inputs.sumdemands / inputs.coincidentdemand).toFixed(3);
+            },
+            resultLabel: 'Diversity Factor'
+          }
+        ]
+      },
+      {
+        id: 'electrostatics',
+        icon: '🔮',
+        title: 'Electrostatics',
+        description: 'Electric Field, Potential, Capacitance',
+        calculators: [
+          {
+            id: 'electric-field',
+            name: 'Electric Field Calculator',
+            formula: 'E = F/q = kQ/r²',
+            explanation: 'Electric field is the force per unit charge at any point in space. It points away from positive charges and toward negative charges. Field strength decreases with the square of distance.',
+            variables: [
+              { id: 'charge', name: 'Source Charge (Q)', unit: 'Coulombs', symbol: 'C' },
+              { id: 'distance', name: 'Distance (r)', unit: 'Meters', symbol: 'm' }
+            ],
+            calculate: (inputs) => {
+              const k = 8.99e9;
+              return k * inputs.charge / (inputs.distance * inputs.distance);
+            },
+            resultLabel: 'Electric Field (N/C)'
+          },
+          {
+            id: 'electric-potential',
+            name: 'Electric Potential Calculator',
+            formula: 'V = kQ/r',
+            explanation: 'Electric potential is the potential energy per unit charge at a point. It represents the work done to bring a unit positive charge from infinity to that point.',
+            variables: [
+              { id: 'charge', name: 'Source Charge (Q)', unit: 'Coulombs', symbol: 'C' },
+              { id: 'distance', name: 'Distance (r)', unit: 'Meters', symbol: 'm' }
+            ],
+            calculate: (inputs) => {
+              const k = 8.99e9;
+              return k * inputs.charge / inputs.distance;
+            },
+            resultLabel: 'Electric Potential (V)'
+          },
+          {
+            id: 'capacitance',
+            name: 'Parallel Plate Capacitance',
+            formula: 'C = ε₀εᵣA/d',
+            explanation: 'Capacitance depends on plate area, separation, and dielectric material. Larger area and higher dielectric constant increase capacitance, while greater separation decreases it.',
+            variables: [
+              { id: 'area', name: 'Plate Area (A)', unit: 'm²', symbol: 'm²' },
+              { id: 'distance', name: 'Plate Separation (d)', unit: 'Meters', symbol: 'm' },
+              { id: 'er', name: 'Relative Permittivity (εᵣ)', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const e0 = 8.854e-12;
+              return e0 * inputs.er * inputs.area / inputs.distance;
+            },
+            resultLabel: 'Capacitance (F)'
+          },
+          {
+            id: 'capacitor-energy',
+            name: 'Capacitor Energy Calculator',
+            formula: 'E = ½CV² = ½QV = Q²/2C',
+            explanation: 'Energy stored in a capacitor is proportional to capacitance and the square of voltage. This energy is stored in the electric field between the plates.',
+            variables: [
+              { id: 'capacitance', name: 'Capacitance (C)', unit: 'Farads', symbol: 'F' },
+              { id: 'voltage', name: 'Voltage (V)', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const energy = 0.5 * inputs.capacitance * inputs.voltage * inputs.voltage;
+              const charge = inputs.capacitance * inputs.voltage;
+              return { energy: energy.toExponential(4), charge: charge.toExponential(4) };
+            },
+            resultLabel: 'Energy & Charge',
+            multiResult: true
+          },
+          {
+            id: 'series-capacitors',
+            name: 'Series Capacitors Calculator',
+            formula: '1/C_total = 1/C₁ + 1/C₂ + 1/C₃',
+            explanation: 'When capacitors are in series, the total capacitance is less than any individual capacitance. The charge is the same on all capacitors, but voltage divides.',
+            variables: [
+              { id: 'c1', name: 'Capacitor 1 (C₁)', unit: 'Farads', symbol: 'F' },
+              { id: 'c2', name: 'Capacitor 2 (C₂)', unit: 'Farads', symbol: 'F' },
+              { id: 'c3', name: 'Capacitor 3 (C₃)', unit: 'Farads', symbol: 'F' }
+            ],
+            calculate: (inputs) => {
+              let sum = 0;
+              if (inputs.c1) sum += 1/inputs.c1;
+              if (inputs.c2) sum += 1/inputs.c2;
+              if (inputs.c3) sum += 1/inputs.c3;
+              return sum > 0 ? 1/sum : 0;
+            },
+            resultLabel: 'Total Capacitance (F)'
+          },
+          {
+            id: 'parallel-capacitors',
+            name: 'Parallel Capacitors Calculator',
+            formula: 'C_total = C₁ + C₂ + C₃',
+            explanation: 'When capacitors are in parallel, total capacitance is the sum of individual capacitances. Voltage is the same across all, but charge distributes.',
+            variables: [
+              { id: 'c1', name: 'Capacitor 1 (C₁)', unit: 'Farads', symbol: 'F' },
+              { id: 'c2', name: 'Capacitor 2 (C₂)', unit: 'Farads', symbol: 'F' },
+              { id: 'c3', name: 'Capacitor 3 (C₃)', unit: 'Farads', symbol: 'F' }
+            ],
+            calculate: (inputs) => {
+              let total = 0;
+              if (inputs.c1) total += inputs.c1;
+              if (inputs.c2) total += inputs.c2;
+              if (inputs.c3) total += inputs.c3;
+              return total;
+            },
+            resultLabel: 'Total Capacitance (F)'
+          }
+        ]
+      },
+      {
+        id: 'electromagnetism',
+        icon: '🧲',
+        title: 'Electromagnetism',
+        description: 'Magnetic Field, Inductance, EMF',
+        calculators: [
+          {
+            id: 'magnetic-field-wire',
+            name: 'Magnetic Field (Straight Wire)',
+            formula: 'B = μ₀I / (2πr)',
+            explanation: 'A current-carrying wire creates a circular magnetic field around it. Field strength is proportional to current and inversely proportional to distance from the wire.',
+            variables: [
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'distance', name: 'Distance (r)', unit: 'Meters', symbol: 'm' }
+            ],
+            calculate: (inputs) => {
+              const mu0 = 4 * Math.PI * 1e-7;
+              return mu0 * inputs.current / (2 * Math.PI * inputs.distance);
+            },
+            resultLabel: 'Magnetic Field (T)'
+          },
+          {
+            id: 'magnetic-field-solenoid',
+            name: 'Magnetic Field (Solenoid)',
+            formula: 'B = μ₀nI = μ₀NI/L',
+            explanation: 'A solenoid creates a uniform magnetic field inside its core. Field strength depends on the number of turns per unit length and the current.',
+            variables: [
+              { id: 'turns', name: 'Number of Turns (N)', unit: '', symbol: '' },
+              { id: 'length', name: 'Length (L)', unit: 'Meters', symbol: 'm' },
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' }
+            ],
+            calculate: (inputs) => {
+              const mu0 = 4 * Math.PI * 1e-7;
+              const n = inputs.turns / inputs.length;
+              return mu0 * n * inputs.current;
+            },
+            resultLabel: 'Magnetic Field (T)'
+          },
+          {
+            id: 'lorentz-force',
+            name: 'Lorentz Force Calculator',
+            formula: 'F = qvB sin(θ)',
+            explanation: 'The Lorentz force is the force on a charged particle moving through a magnetic field. It\'s perpendicular to both velocity and field, causing circular motion.',
+            variables: [
+              { id: 'charge', name: 'Charge (q)', unit: 'Coulombs', symbol: 'C' },
+              { id: 'velocity', name: 'Velocity (v)', unit: 'm/s', symbol: 'm/s' },
+              { id: 'bfield', name: 'Magnetic Field (B)', unit: 'Tesla', symbol: 'T' },
+              { id: 'angle', name: 'Angle (θ)', unit: 'Degrees', symbol: '°' }
+            ],
+            calculate: (inputs) => {
+              const angleRad = inputs.angle * Math.PI / 180;
+              return inputs.charge * inputs.velocity * inputs.bfield * Math.sin(angleRad);
+            },
+            resultLabel: 'Force (N)'
+          },
+          {
+            id: 'inductance',
+            name: 'Solenoid Inductance Calculator',
+            formula: 'L = μ₀N²A/l',
+            explanation: 'Inductance is a property that opposes changes in current. For a solenoid, it depends on the square of turns, cross-sectional area, and inversely on length.',
+            variables: [
+              { id: 'turns', name: 'Number of Turns (N)', unit: '', symbol: '' },
+              { id: 'area', name: 'Cross-sectional Area (A)', unit: 'm²', symbol: 'm²' },
+              { id: 'length', name: 'Length (l)', unit: 'Meters', symbol: 'm' }
+            ],
+            calculate: (inputs) => {
+              const mu0 = 4 * Math.PI * 1e-7;
+              return mu0 * inputs.turns * inputs.turns * inputs.area / inputs.length;
+            },
+            resultLabel: 'Inductance (H)'
+          },
+          {
+            id: 'inductor-energy',
+            name: 'Inductor Energy Calculator',
+            formula: 'E = ½LI²',
+            explanation: 'Energy in an inductor is stored in its magnetic field. Unlike capacitors, the energy depends on current squared, not voltage squared.',
+            variables: [
+              { id: 'inductance', name: 'Inductance (L)', unit: 'Henries', symbol: 'H' },
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' }
+            ],
+            calculate: (inputs) => {
+              return 0.5 * inputs.inductance * inputs.current * inputs.current;
+            },
+            resultLabel: 'Energy (J)'
+          },
+          {
+            id: 'faraday-law',
+            name: 'Faraday\'s Law (Induced EMF)',
+            formula: 'EMF = -N × dΦ/dt',
+            explanation: 'Faraday\'s law states that a changing magnetic flux induces an EMF. The negative sign (Lenz\'s Law) indicates the induced EMF opposes the change causing it.',
+            variables: [
+              { id: 'turns', name: 'Number of Turns (N)', unit: '', symbol: '' },
+              { id: 'dflux', name: 'Change in Flux (ΔΦ)', unit: 'Weber', symbol: 'Wb' },
+              { id: 'dt', name: 'Time Interval (Δt)', unit: 'Seconds', symbol: 's' }
+            ],
+            calculate: (inputs) => {
+              return Math.abs(inputs.turns * inputs.dflux / inputs.dt);
+            },
+            resultLabel: 'Induced EMF (V)'
+          }
+        ]
+      },
+      {
+        id: 'transformers',
+        icon: '🔌',
+        title: 'Transformer Calculations',
+        description: 'Turns Ratio, Efficiency, Losses',
+        calculators: [
+          {
+            id: 'turns-ratio',
+            name: 'Turns Ratio & Voltage Transformation',
+            formula: 'V₁/V₂ = N₁/N₂ = a',
+            explanation: 'The turns ratio determines voltage transformation. Step-up transformers have more secondary turns (a<1), step-down have fewer secondary turns (a>1).',
+            variables: [
+              { id: 'n1', name: 'Primary Turns (N₁)', unit: '', symbol: '' },
+              { id: 'n2', name: 'Secondary Turns (N₂)', unit: '', symbol: '' },
+              { id: 'v1', name: 'Primary Voltage (V₁)', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const ratio = inputs.n1 / inputs.n2;
+              const v2 = inputs.v1 / ratio;
+              return { ratio: ratio.toFixed(4), v2: v2.toFixed(2) };
+            },
+            resultLabel: 'Turns Ratio & Secondary Voltage',
+            multiResult: true
+          },
+          {
+            id: 'transformer-current',
+            name: 'Current Transformation',
+            formula: 'I₁/I₂ = N₂/N₁ = 1/a',
+            explanation: 'In an ideal transformer, current transforms inversely to voltage. When voltage steps up, current steps down proportionally to maintain power balance.',
+            variables: [
+              { id: 'n1', name: 'Primary Turns (N₁)', unit: '', symbol: '' },
+              { id: 'n2', name: 'Secondary Turns (N₂)', unit: '', symbol: '' },
+              { id: 'i1', name: 'Primary Current (I₁)', unit: 'Amperes', symbol: 'A' }
+            ],
+            calculate: (inputs) => {
+              const i2 = inputs.i1 * inputs.n1 / inputs.n2;
+              return i2.toFixed(4);
+            },
+            resultLabel: 'Secondary Current (I₂)'
+          },
+          {
+            id: 'transformer-efficiency',
+            name: 'Transformer Efficiency',
+            formula: 'η = (Output Power / Input Power) × 100%',
+            explanation: 'Transformer efficiency is the ratio of output to input power. Losses include copper losses (I²R in windings) and core losses (hysteresis and eddy currents).',
+            variables: [
+              { id: 'pout', name: 'Output Power', unit: 'Watts', symbol: 'W' },
+              { id: 'copperLoss', name: 'Copper Loss', unit: 'Watts', symbol: 'W' },
+              { id: 'coreLoss', name: 'Core Loss', unit: 'Watts', symbol: 'W' }
+            ],
+            calculate: (inputs) => {
+              const pin = inputs.pout + inputs.copperLoss + inputs.coreLoss;
+              const efficiency = (inputs.pout / pin) * 100;
+              const totalLoss = inputs.copperLoss + inputs.coreLoss;
+              return { efficiency: efficiency.toFixed(2), pin: pin.toFixed(2), loss: totalLoss.toFixed(2) };
+            },
+            resultLabel: 'Efficiency & Losses',
+            multiResult: true
+          },
+          {
+            id: 'voltage-regulation',
+            name: 'Voltage Regulation',
+            formula: 'VR% = ((V_no-load - V_full-load) / V_full-load) × 100',
+            explanation: 'Voltage regulation indicates how much the output voltage changes from no-load to full-load conditions. Lower regulation percentage means better voltage stability.',
+            variables: [
+              { id: 'vNoLoad', name: 'No-Load Voltage', unit: 'Volts', symbol: 'V' },
+              { id: 'vFullLoad', name: 'Full-Load Voltage', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const vr = ((inputs.vNoLoad - inputs.vFullLoad) / inputs.vFullLoad) * 100;
+              return vr.toFixed(2);
+            },
+            resultLabel: 'Voltage Regulation (%)'
+          },
+          {
+            id: 'transformer-kva',
+            name: 'Transformer kVA Rating',
+            formula: 'S = V × I (single-phase) | S = √3 × V × I (three-phase)',
+            explanation: 'Transformer rating in kVA represents its power handling capacity. It\'s based on voltage and current ratings, not actual power delivered (which depends on power factor).',
+            variables: [
+              { id: 'voltage', name: 'Voltage (V)', unit: 'Volts', symbol: 'V' },
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'phases', name: 'Number of Phases', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              let kva;
+              if (inputs.phases === 1) {
+                kva = inputs.voltage * inputs.current / 1000;
+              } else {
+                kva = Math.sqrt(3) * inputs.voltage * inputs.current / 1000;
+              }
+              return kva.toFixed(2);
+            },
+            resultLabel: 'kVA Rating'
+          }
+        ]
+      },
+      {
+        id: 'machines',
+        icon: '⚙️',
+        title: 'Electric Machines',
+        description: 'Motors, Generators, Speed, Torque',
+        calculators: [
+          {
+            id: 'synchronous-speed',
+            name: 'Synchronous Speed Calculator',
+            formula: 'N_s = 120f / P',
+            explanation: 'Synchronous speed is the speed at which the magnetic field rotates in an AC machine. It depends on supply frequency and number of poles.',
+            variables: [
+              { id: 'frequency', name: 'Frequency (f)', unit: 'Hertz', symbol: 'Hz' },
+              { id: 'poles', name: 'Number of Poles (P)', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              return (120 * inputs.frequency) / inputs.poles;
+            },
+            resultLabel: 'Synchronous Speed (RPM)'
+          },
+          {
+            id: 'slip',
+            name: 'Slip Calculator',
+            formula: 's = (N_s - N_r) / N_s × 100%',
+            explanation: 'Slip is the difference between synchronous speed and rotor speed, expressed as a percentage. Induction motors always operate with some slip to produce torque.',
+            variables: [
+              { id: 'ns', name: 'Synchronous Speed (N_s)', unit: 'RPM', symbol: 'RPM' },
+              { id: 'nr', name: 'Rotor Speed (N_r)', unit: 'RPM', symbol: 'RPM' }
+            ],
+            calculate: (inputs) => {
+              const slip = ((inputs.ns - inputs.nr) / inputs.ns) * 100;
+              return { slip: slip.toFixed(2), slipDecimal: (slip/100).toFixed(4) };
+            },
+            resultLabel: 'Slip',
+            multiResult: true
+          },
+          {
+            id: 'motor-torque',
+            name: 'Motor Torque Calculator',
+            formula: 'T = P × 60 / (2πN) = 9549 × P(kW) / N(RPM)',
+            explanation: 'Torque is the rotational force produced by a motor. It\'s related to power and speed—for the same power, lower speed means higher torque.',
+            variables: [
+              { id: 'power', name: 'Power (P)', unit: 'kW', symbol: 'kW' },
+              { id: 'speed', name: 'Speed (N)', unit: 'RPM', symbol: 'RPM' }
+            ],
+            calculate: (inputs) => {
+              return (9549 * inputs.power) / inputs.speed;
+            },
+            resultLabel: 'Torque (N·m)'
+          },
+          {
+            id: 'motor-efficiency',
+            name: 'Motor Efficiency Calculator',
+            formula: 'η = (Output Power / Input Power) × 100%',
+            explanation: 'Motor efficiency is the ratio of mechanical output power to electrical input power. Losses include copper, iron, mechanical, and stray losses.',
+            variables: [
+              { id: 'pout', name: 'Output Power (Mechanical)', unit: 'kW', symbol: 'kW' },
+              { id: 'pin', name: 'Input Power (Electrical)', unit: 'kW', symbol: 'kW' }
+            ],
+            calculate: (inputs) => {
+              const efficiency = (inputs.pout / inputs.pin) * 100;
+              const losses = inputs.pin - inputs.pout;
+              return { efficiency: efficiency.toFixed(2), losses: losses.toFixed(3) };
+            },
+            resultLabel: 'Efficiency & Losses',
+            multiResult: true
+          },
+          {
+            id: 'dc-motor-emf',
+            name: 'DC Motor Back EMF',
+            formula: 'E_b = V - I_a × R_a',
+            explanation: 'Back EMF is the voltage generated by a spinning DC motor that opposes the supply voltage. It increases with speed and limits the armature current.',
+            variables: [
+              { id: 'voltage', name: 'Supply Voltage (V)', unit: 'Volts', symbol: 'V' },
+              { id: 'current', name: 'Armature Current (I_a)', unit: 'Amperes', symbol: 'A' },
+              { id: 'resistance', name: 'Armature Resistance (R_a)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              return inputs.voltage - (inputs.current * inputs.resistance);
+            },
+            resultLabel: 'Back EMF (V)'
+          },
+          {
+            id: 'generator-emf',
+            name: 'Generator EMF Equation',
+            formula: 'E = PφNZ / (60A)',
+            explanation: 'The EMF generated in a DC generator depends on magnetic flux, speed, number of conductors, poles, and armature paths. This is the fundamental generator equation.',
+            variables: [
+              { id: 'poles', name: 'Number of Poles (P)', unit: '', symbol: '' },
+              { id: 'flux', name: 'Flux per Pole (φ)', unit: 'Weber', symbol: 'Wb' },
+              { id: 'speed', name: 'Speed (N)', unit: 'RPM', symbol: 'RPM' },
+              { id: 'conductors', name: 'Number of Conductors (Z)', unit: '', symbol: '' },
+              { id: 'paths', name: 'Parallel Paths (A)', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              return (inputs.poles * inputs.flux * inputs.speed * inputs.conductors) / (60 * inputs.paths);
+            },
+            resultLabel: 'Generated EMF (V)'
+          }
+        ]
+      },
+      {
+        id: 'power-systems',
+        icon: '🏭',
+        title: 'Power System Calculations',
+        description: 'Transmission, Losses, Fault Analysis',
+        calculators: [
+          {
+            id: 'line-loss',
+            name: 'Transmission Line Loss',
+            formula: 'P_loss = I²R = P²R / (V²cos²φ)',
+            explanation: 'Line losses are due to resistance in conductors. They\'re proportional to current squared, which is why high voltage transmission reduces losses.',
+            variables: [
+              { id: 'current', name: 'Line Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'resistance', name: 'Line Resistance (R)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              const loss = inputs.current * inputs.current * inputs.resistance;
+              return { lossW: loss.toFixed(2), lossKW: (loss/1000).toFixed(4) };
+            },
+            resultLabel: 'Power Loss',
+            multiResult: true
+          },
+          {
+            id: 'voltage-drop',
+            name: 'Voltage Drop Calculator',
+            formula: 'V_drop = IR cos(φ) + IX sin(φ)',
+            explanation: 'Voltage drop in transmission lines depends on current, resistance, reactance, and power factor. It\'s a crucial factor in system design and voltage regulation.',
+            variables: [
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'resistance', name: 'Resistance (R)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'reactance', name: 'Reactance (X)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'pf', name: 'Power Factor', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const phi = Math.acos(inputs.pf);
+              const vdrop = inputs.current * inputs.resistance * inputs.pf + inputs.current * inputs.reactance * Math.sin(phi);
+              return vdrop.toFixed(2);
+            },
+            resultLabel: 'Voltage Drop (V)'
+          },
+          {
+            id: 'per-unit',
+            name: 'Per Unit System Calculator',
+            formula: 'p.u. = Actual Value / Base Value',
+            explanation: 'Per unit system simplifies power system calculations by expressing quantities as ratios to base values. It normalizes different voltage levels for easier analysis.',
+            variables: [
+              { id: 'actual', name: 'Actual Value', unit: '', symbol: '' },
+              { id: 'base', name: 'Base Value', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              return (inputs.actual / inputs.base).toFixed(4);
+            },
+            resultLabel: 'Per Unit Value'
+          },
+          {
+            id: 'short-circuit',
+            name: 'Short Circuit Current',
+            formula: 'I_sc = V / Z_total',
+            explanation: 'Short circuit current is the maximum current that flows during a fault. It\'s determined by the system voltage and total impedance to the fault point.',
+            variables: [
+              { id: 'voltage', name: 'System Voltage (V)', unit: 'Volts', symbol: 'V' },
+              { id: 'impedance', name: 'Total Impedance (Z)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              const isc = inputs.voltage / inputs.impedance;
+              const mva = (Math.sqrt(3) * inputs.voltage * isc) / 1e6;
+              return { isc: isc.toFixed(2), mva: mva.toFixed(4) };
+            },
+            resultLabel: 'Short Circuit Values',
+            multiResult: true
+          },
+          {
+            id: 'transmission-efficiency',
+            name: 'Transmission Efficiency',
+            formula: 'η = (P_received / P_sent) × 100%',
+            explanation: 'Transmission efficiency is the ratio of power received at load to power sent from source. Losses occur due to resistance and corona effects.',
+            variables: [
+              { id: 'psent', name: 'Power Sent', unit: 'MW', symbol: 'MW' },
+              { id: 'ploss', name: 'Line Losses', unit: 'MW', symbol: 'MW' }
+            ],
+            calculate: (inputs) => {
+              const preceived = inputs.psent - inputs.ploss;
+              const efficiency = (preceived / inputs.psent) * 100;
+              return { efficiency: efficiency.toFixed(2), preceived: preceived.toFixed(4) };
+            },
+            resultLabel: 'Efficiency & Received Power',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'high-voltage',
+        icon: '⚠️',
+        title: 'High Voltage Engineering',
+        description: 'Breakdown, Corona, Insulation',
+        calculators: [
+          {
+            id: 'breakdown-voltage',
+            name: 'Air Gap Breakdown Voltage',
+            formula: 'V_b = 30δd (kV) for uniform field',
+            explanation: 'Breakdown voltage is the voltage at which air or insulation fails. It depends on gap distance, air density (δ), and field uniformity. 30 kV/cm is typical for uniform field in air.',
+            variables: [
+              { id: 'distance', name: 'Gap Distance (d)', unit: 'cm', symbol: 'cm' },
+              { id: 'delta', name: 'Air Density Factor (δ)', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              return 30 * inputs.delta * inputs.distance;
+            },
+            resultLabel: 'Breakdown Voltage (kV)'
+          },
+          {
+            id: 'corona-loss',
+            name: 'Corona Loss Calculator (Peek\'s)',
+            formula: 'P = 244 × (f+25) × √(r/d) × (V-V₀)² × 10⁻⁵ kW/km/phase',
+            explanation: 'Corona is ionization of air around high voltage conductors. Peek\'s formula estimates power loss due to corona, which increases with voltage above critical voltage.',
+            variables: [
+              { id: 'frequency', name: 'Frequency (f)', unit: 'Hz', symbol: 'Hz' },
+              { id: 'radius', name: 'Conductor Radius (r)', unit: 'cm', symbol: 'cm' },
+              { id: 'spacing', name: 'Conductor Spacing (d)', unit: 'cm', symbol: 'cm' },
+              { id: 'voltage', name: 'Line Voltage (V)', unit: 'kV', symbol: 'kV' },
+              { id: 'v0', name: 'Critical Voltage (V₀)', unit: 'kV', symbol: 'kV' }
+            ],
+            calculate: (inputs) => {
+              const dv = inputs.voltage - inputs.v0;
+              if (dv <= 0) return 0;
+              return 244 * (inputs.frequency + 25) * Math.sqrt(inputs.radius / inputs.spacing) * dv * dv * 1e-5;
+            },
+            resultLabel: 'Corona Loss (kW/km/phase)'
+          },
+          {
+            id: 'insulation-resistance',
+            name: 'Insulation Resistance (Cable)',
+            formula: 'R = ρ × ln(R₂/R₁) / (2πL)',
+            explanation: 'Insulation resistance of a cable depends on the resistivity of insulating material, inner and outer radii, and cable length. Higher values indicate better insulation.',
+            variables: [
+              { id: 'resistivity', name: 'Resistivity (ρ)', unit: 'Ω·m', symbol: 'Ω·m' },
+              { id: 'r1', name: 'Inner Radius (R₁)', unit: 'Meters', symbol: 'm' },
+              { id: 'r2', name: 'Outer Radius (R₂)', unit: 'Meters', symbol: 'm' },
+              { id: 'length', name: 'Cable Length (L)', unit: 'Meters', symbol: 'm' }
+            ],
+            calculate: (inputs) => {
+              return (inputs.resistivity * Math.log(inputs.r2 / inputs.r1)) / (2 * Math.PI * inputs.length);
+            },
+            resultLabel: 'Insulation Resistance (Ω)'
+          },
+          {
+            id: 'creepage-distance',
+            name: 'Creepage Distance Calculator',
+            formula: 'Creepage = Voltage × Specific Creepage',
+            explanation: 'Creepage distance is the shortest path along an insulator surface between conductors. It must be adequate to prevent flashover, especially in polluted conditions.',
+            variables: [
+              { id: 'voltage', name: 'System Voltage', unit: 'kV', symbol: 'kV' },
+              { id: 'specific', name: 'Specific Creepage', unit: 'mm/kV', symbol: 'mm/kV' }
+            ],
+            calculate: (inputs) => {
+              const creepage = inputs.voltage * inputs.specific;
+              return { creepageMm: creepage.toFixed(1), creepageM: (creepage/1000).toFixed(4) };
+            },
+            resultLabel: 'Required Creepage',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'renewable',
+        icon: '☀️',
+        title: 'Renewable Energy',
+        description: 'Solar Panel, Wind Power, Battery Sizing',
+        calculators: [
+          {
+            id: 'solar-power',
+            name: 'Solar Panel Power Output',
+            formula: 'P = A × η × G × PR',
+            explanation: 'Solar panel output depends on panel area, efficiency, solar irradiance (typically 1000 W/m² at peak), and performance ratio accounting for real-world losses.',
+            variables: [
+              { id: 'area', name: 'Panel Area (A)', unit: 'm²', symbol: 'm²' },
+              { id: 'efficiency', name: 'Panel Efficiency (η)', unit: '%', symbol: '%' },
+              { id: 'irradiance', name: 'Solar Irradiance (G)', unit: 'W/m²', symbol: 'W/m²' },
+              { id: 'pr', name: 'Performance Ratio (PR)', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const power = inputs.area * (inputs.efficiency/100) * inputs.irradiance * inputs.pr;
+              return { powerW: power.toFixed(2), powerKW: (power/1000).toFixed(4) };
+            },
+            resultLabel: 'Power Output',
+            multiResult: true
+          },
+          {
+            id: 'solar-energy',
+            name: 'Daily Solar Energy Production',
+            formula: 'E = P_peak × PSH',
+            explanation: 'Daily energy production equals peak power multiplied by Peak Sun Hours (PSH). PSH varies by location and season, typically 3-6 hours in most regions.',
+            variables: [
+              { id: 'peakPower', name: 'Peak Power (kWp)', unit: 'kW', symbol: 'kW' },
+              { id: 'psh', name: 'Peak Sun Hours (PSH)', unit: 'hours', symbol: 'h' },
+              { id: 'pr', name: 'Performance Ratio', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const daily = inputs.peakPower * inputs.psh * inputs.pr;
+              const yearly = daily * 365;
+              return { daily: daily.toFixed(2), yearly: yearly.toFixed(1) };
+            },
+            resultLabel: 'Energy Production',
+            multiResult: true
+          },
+          {
+            id: 'battery-sizing',
+            name: 'Battery Bank Sizing',
+            formula: 'C = (E × DoA) / (DoD × η_battery × V)',
+            explanation: 'Battery capacity must account for daily energy needs, days of autonomy (backup), depth of discharge limits, battery efficiency, and system voltage.',
+            variables: [
+              { id: 'dailyEnergy', name: 'Daily Energy Need', unit: 'kWh', symbol: 'kWh' },
+              { id: 'autonomy', name: 'Days of Autonomy', unit: 'days', symbol: 'days' },
+              { id: 'dod', name: 'Depth of Discharge', unit: '%', symbol: '%' },
+              { id: 'efficiency', name: 'Battery Efficiency', unit: '%', symbol: '%' },
+              { id: 'voltage', name: 'System Voltage', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const capacity = (inputs.dailyEnergy * 1000 * inputs.autonomy) / ((inputs.dod/100) * (inputs.efficiency/100) * inputs.voltage);
+              const energy = capacity * inputs.voltage / 1000;
+              return { capacityAh: capacity.toFixed(1), energyKWh: energy.toFixed(2) };
+            },
+            resultLabel: 'Battery Capacity',
+            multiResult: true
+          },
+          {
+            id: 'inverter-sizing',
+            name: 'Inverter Sizing Calculator',
+            formula: 'P_inverter = P_load × Safety Factor',
+            explanation: 'Inverter must handle peak load plus a safety margin. Consider surge requirements for motor starting and future expansion.',
+            variables: [
+              { id: 'peakLoad', name: 'Peak Load', unit: 'Watts', symbol: 'W' },
+              { id: 'safetyFactor', name: 'Safety Factor', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const inverterSize = inputs.peakLoad * inputs.safetyFactor;
+              return { sizeW: inverterSize.toFixed(0), sizeKW: (inverterSize/1000).toFixed(2) };
+            },
+            resultLabel: 'Inverter Size',
+            multiResult: true
+          },
+          {
+            id: 'wind-power',
+            name: 'Wind Power Calculator',
+            formula: 'P = ½ρAv³Cp',
+            explanation: 'Wind power is proportional to air density, swept area, and cube of wind speed. Cp (power coefficient) has a theoretical maximum of 0.593 (Betz limit).',
+            variables: [
+              { id: 'density', name: 'Air Density (ρ)', unit: 'kg/m³', symbol: 'kg/m³' },
+              { id: 'area', name: 'Swept Area (A)', unit: 'm²', symbol: 'm²' },
+              { id: 'velocity', name: 'Wind Speed (v)', unit: 'm/s', symbol: 'm/s' },
+              { id: 'cp', name: 'Power Coefficient (Cp)', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const power = 0.5 * inputs.density * inputs.area * Math.pow(inputs.velocity, 3) * inputs.cp;
+              return { powerW: power.toFixed(2), powerKW: (power/1000).toFixed(4) };
+            },
+            resultLabel: 'Wind Power',
+            multiResult: true
+          },
+          {
+            id: 'wind-energy',
+            name: 'Wind Turbine Energy Output',
+            formula: 'E = P × CF × 8760 hours/year',
+            explanation: 'Annual energy output depends on rated power and capacity factor (CF). CF accounts for varying wind speeds and is typically 25-45% for modern turbines.',
+            variables: [
+              { id: 'ratedPower', name: 'Rated Power', unit: 'kW', symbol: 'kW' },
+              { id: 'cf', name: 'Capacity Factor', unit: '%', symbol: '%' }
+            ],
+            calculate: (inputs) => {
+              const annual = inputs.ratedPower * (inputs.cf/100) * 8760;
+              return { annualMWh: (annual/1000).toFixed(1), annualKWh: annual.toFixed(0) };
+            },
+            resultLabel: 'Annual Energy Output',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'electronics',
+        icon: '📟',
+        title: 'Electronics Calculations',
+        description: 'Diode, Transistor, Amplifier, Filters',
+        calculators: [
+          {
+            id: 'diode-current',
+            name: 'Diode Current (Shockley Equation)',
+            formula: 'I = Is × (e^(V/nVt) - 1)',
+            explanation: 'The Shockley equation describes diode current-voltage relationship. Is is saturation current, n is ideality factor (1-2), and Vt is thermal voltage (~26mV at room temp).',
+            variables: [
+              { id: 'is', name: 'Saturation Current (Is)', unit: 'Amperes', symbol: 'A' },
+              { id: 'voltage', name: 'Forward Voltage (V)', unit: 'Volts', symbol: 'V' },
+              { id: 'n', name: 'Ideality Factor (n)', unit: '', symbol: '' },
+              { id: 'temp', name: 'Temperature', unit: '°C', symbol: '°C' }
+            ],
+            calculate: (inputs) => {
+              const vt = (inputs.temp + 273.15) * 8.617e-5; // kT/q
+              const current = inputs.is * (Math.exp(inputs.voltage / (inputs.n * vt)) - 1);
+              return { current: current.toExponential(4), vt: (vt*1000).toFixed(2) };
+            },
+            resultLabel: 'Diode Current',
+            multiResult: true
+          },
+          {
+            id: 'transistor-biasing',
+            name: 'BJT Transistor Biasing',
+            formula: 'Ic = β × Ib, Ie = Ic + Ib ≈ Ic',
+            explanation: 'BJT operation depends on base current controlling collector current through current gain (β). The emitter current is the sum of base and collector currents.',
+            variables: [
+              { id: 'ib', name: 'Base Current (Ib)', unit: 'mA', symbol: 'mA' },
+              { id: 'beta', name: 'Current Gain (β)', unit: '', symbol: '' },
+              { id: 'vcc', name: 'Supply Voltage (Vcc)', unit: 'Volts', symbol: 'V' },
+              { id: 'rc', name: 'Collector Resistance (Rc)', unit: 'Ohms', symbol: 'Ω' }
+            ],
+            calculate: (inputs) => {
+              const ic = inputs.beta * inputs.ib;
+              const ie = ic + inputs.ib;
+              const vce = inputs.vcc - (ic * inputs.rc / 1000);
+              return { ic: ic.toFixed(3), ie: ie.toFixed(3), vce: vce.toFixed(2) };
+            },
+            resultLabel: 'Transistor Currents & Vce',
+            multiResult: true
+          },
+          {
+            id: 'amplifier-gain',
+            name: 'Amplifier Voltage Gain',
+            formula: 'Av = Vout / Vin (Linear) | Av(dB) = 20×log10(Av)',
+            explanation: 'Voltage gain is the ratio of output to input voltage. It\'s often expressed in decibels (dB) for convenience when dealing with large gains or cascaded stages.',
+            variables: [
+              { id: 'vin', name: 'Input Voltage', unit: 'mV', symbol: 'mV' },
+              { id: 'vout', name: 'Output Voltage', unit: 'mV', symbol: 'mV' }
+            ],
+            calculate: (inputs) => {
+              const av = inputs.vout / inputs.vin;
+              const avDb = 20 * Math.log10(Math.abs(av));
+              return { avLinear: av.toFixed(2), avDb: avDb.toFixed(2) };
+            },
+            resultLabel: 'Voltage Gain',
+            multiResult: true
+          },
+          {
+            id: 'rc-filter',
+            name: 'RC Filter Cutoff Frequency',
+            formula: 'fc = 1 / (2πRC)',
+            explanation: 'RC filters pass or block frequencies based on the RC time constant. Cutoff frequency is where output is 3dB down (70.7% of maximum).',
+            variables: [
+              { id: 'resistance', name: 'Resistance (R)', unit: 'Ohms', symbol: 'Ω' },
+              { id: 'capacitance', name: 'Capacitance (C)', unit: 'Farads', symbol: 'F' }
+            ],
+            calculate: (inputs) => {
+              const fc = 1 / (2 * Math.PI * inputs.resistance * inputs.capacitance);
+              const tau = inputs.resistance * inputs.capacitance;
+              return { fc: fc.toFixed(2), tau: (tau*1000).toFixed(4) };
+            },
+            resultLabel: 'Cutoff Frequency & Time Constant',
+            multiResult: true
+          },
+          {
+            id: 'rectifier',
+            name: 'Rectifier Output Voltage',
+            formula: 'Vdc = Vm × 0.636 (Half) | Vdc = Vm × 0.9 (Full)',
+            explanation: 'Rectifiers convert AC to DC. Half-wave uses one diode (Vdc = 0.636×Vm), full-wave bridge uses four diodes (Vdc = 0.9×Vm) for higher efficiency.',
+            variables: [
+              { id: 'vpeak', name: 'Peak AC Voltage (Vm)', unit: 'Volts', symbol: 'V' },
+              { id: 'vdrop', name: 'Diode Drop', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const halfWave = (inputs.vpeak - inputs.vdrop) * 0.636;
+              const fullWave = (inputs.vpeak - 2*inputs.vdrop) * 0.9;
+              return { halfWave: halfWave.toFixed(2), fullWave: fullWave.toFixed(2) };
+            },
+            resultLabel: 'DC Output Voltages',
+            multiResult: true
+          },
+          {
+            id: 'ripple-factor',
+            name: 'Ripple Factor Calculator',
+            formula: 'r = Vr(rms) / Vdc',
+            explanation: 'Ripple factor measures AC component remaining in rectified DC. Lower ripple factor indicates smoother DC. Capacitor filters reduce ripple significantly.',
+            variables: [
+              { id: 'vrms', name: 'Ripple Voltage (Vrms)', unit: 'mV', symbol: 'mV' },
+              { id: 'vdc', name: 'DC Voltage', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const ripple = (inputs.vrms / 1000) / inputs.vdc;
+              const ripplePercent = ripple * 100;
+              return { ripple: ripple.toFixed(4), percent: ripplePercent.toFixed(2) };
+            },
+            resultLabel: 'Ripple Factor',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'communications',
+        icon: '📡',
+        title: 'Communication & Signals',
+        description: 'Frequency, Bandwidth, Decibels',
+        calculators: [
+          {
+            id: 'wavelength',
+            name: 'Wavelength Calculator',
+            formula: 'λ = c / f',
+            explanation: 'Wavelength is inversely proportional to frequency. For electromagnetic waves, c = 3×10⁸ m/s (speed of light). Important for antenna design.',
+            variables: [
+              { id: 'frequency', name: 'Frequency', unit: 'MHz', symbol: 'MHz' }
+            ],
+            calculate: (inputs) => {
+              const c = 3e8;
+              const freqHz = inputs.frequency * 1e6;
+              const wavelength = c / freqHz;
+              return { wavelengthM: wavelength.toFixed(4), wavelengthCm: (wavelength*100).toFixed(2) };
+            },
+            resultLabel: 'Wavelength',
+            multiResult: true
+          },
+          {
+            id: 'decibel',
+            name: 'Decibel (dB) Calculator',
+            formula: 'dB = 10×log10(P2/P1) | dB = 20×log10(V2/V1)',
+            explanation: 'Decibels express ratios logarithmically. Use 10×log for power ratios, 20×log for voltage/current ratios. Positive dB = gain, negative dB = loss.',
+            variables: [
+              { id: 'p1', name: 'Reference Power (P1)', unit: 'Watts', symbol: 'W' },
+              { id: 'p2', name: 'Measured Power (P2)', unit: 'Watts', symbol: 'W' }
+            ],
+            calculate: (inputs) => {
+              const dbPower = 10 * Math.log10(inputs.p2 / inputs.p1);
+              const ratio = inputs.p2 / inputs.p1;
+              return { db: dbPower.toFixed(2), ratio: ratio.toFixed(4) };
+            },
+            resultLabel: 'Decibel & Power Ratio',
+            multiResult: true
+          },
+          {
+            id: 'dbm',
+            name: 'dBm to Watts Converter',
+            formula: 'P(W) = 10^((dBm-30)/10)',
+            explanation: 'dBm is power referenced to 1 milliwatt. 0 dBm = 1 mW, 30 dBm = 1 W. Common in RF and communication systems for measuring signal power.',
+            variables: [
+              { id: 'dbm', name: 'Power (dBm)', unit: 'dBm', symbol: 'dBm' }
+            ],
+            calculate: (inputs) => {
+              const mW = Math.pow(10, inputs.dbm / 10);
+              const W = mW / 1000;
+              return { mW: mW.toFixed(4), W: W.toExponential(4) };
+            },
+            resultLabel: 'Power in Watts',
+            multiResult: true
+          },
+          {
+            id: 'modulation-index',
+            name: 'AM Modulation Index',
+            formula: 'm = (Vmax - Vmin) / (Vmax + Vmin)',
+            explanation: 'Modulation index indicates the depth of amplitude modulation. m = 1 (100%) is maximum without distortion. Higher m means more information but also more sideband power.',
+            variables: [
+              { id: 'vmax', name: 'Maximum Amplitude', unit: 'Volts', symbol: 'V' },
+              { id: 'vmin', name: 'Minimum Amplitude', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const m = (inputs.vmax - inputs.vmin) / (inputs.vmax + inputs.vmin);
+              const mPercent = m * 100;
+              return { m: m.toFixed(4), mPercent: mPercent.toFixed(1) };
+            },
+            resultLabel: 'Modulation Index',
+            multiResult: true
+          },
+          {
+            id: 'bandwidth',
+            name: 'Signal Bandwidth Calculator',
+            formula: 'BW = fH - fL (3dB bandwidth)',
+            explanation: 'Bandwidth is the frequency range where signal power is above half (-3dB) of maximum. Higher bandwidth allows faster data transmission but requires more spectrum.',
+            variables: [
+              { id: 'fh', name: 'Upper Frequency (fH)', unit: 'kHz', symbol: 'kHz' },
+              { id: 'fl', name: 'Lower Frequency (fL)', unit: 'kHz', symbol: 'kHz' }
+            ],
+            calculate: (inputs) => {
+              const bw = inputs.fh - inputs.fl;
+              const fc = (inputs.fh + inputs.fl) / 2;
+              const q = fc / bw;
+              return { bw: bw.toFixed(2), fc: fc.toFixed(2), q: q.toFixed(2) };
+            },
+            resultLabel: 'Bandwidth, Center Freq & Q',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'industrial',
+        icon: '🔧',
+        title: 'Industrial Electrical',
+        description: 'Cable Sizing, Protection, Earthing',
+        calculators: [
+          {
+            id: 'cable-sizing',
+            name: 'Cable Size Calculator',
+            formula: 'A = (2ρLI) / (Vd × 1000)',
+            explanation: 'Cable cross-sectional area depends on current, length, resistivity, and allowable voltage drop. Proper sizing prevents overheating and excessive voltage drop.',
+            variables: [
+              { id: 'current', name: 'Current (I)', unit: 'Amperes', symbol: 'A' },
+              { id: 'length', name: 'Cable Length (L)', unit: 'Meters', symbol: 'm' },
+              { id: 'vdrop', name: 'Allowable Voltage Drop', unit: 'Volts', symbol: 'V' },
+              { id: 'resistivity', name: 'Resistivity (ρ)', unit: 'Ω·mm²/m', symbol: 'Ω·mm²/m' }
+            ],
+            calculate: (inputs) => {
+              const area = (2 * inputs.resistivity * inputs.length * inputs.current) / (inputs.vdrop);
+              return area.toFixed(2);
+            },
+            resultLabel: 'Cable Cross-Section (mm²)'
+          },
+          {
+            id: 'earthing-resistance',
+            name: 'Earth Electrode Resistance',
+            formula: 'R = ρ / (2πL) × ln(4L/d)',
+            explanation: 'Earth electrode resistance depends on soil resistivity, electrode length, and diameter. Lower resistance provides better fault current path and safety.',
+            variables: [
+              { id: 'resistivity', name: 'Soil Resistivity (ρ)', unit: 'Ω·m', symbol: 'Ω·m' },
+              { id: 'length', name: 'Electrode Length (L)', unit: 'Meters', symbol: 'm' },
+              { id: 'diameter', name: 'Electrode Diameter (d)', unit: 'Meters', symbol: 'm' }
+            ],
+            calculate: (inputs) => {
+              return (inputs.resistivity / (2 * Math.PI * inputs.length)) * Math.log(4 * inputs.length / inputs.diameter);
+            },
+            resultLabel: 'Earth Resistance (Ω)'
+          },
+          {
+            id: 'circuit-breaker',
+            name: 'Circuit Breaker Rating',
+            formula: 'I_rated ≥ I_load × 1.25 (continuous)',
+            explanation: 'Circuit breaker must be rated above maximum continuous load current with safety margin. Also consider short circuit breaking capacity and coordination with upstream devices.',
+            variables: [
+              { id: 'loadCurrent', name: 'Load Current', unit: 'Amperes', symbol: 'A' },
+              { id: 'safetyFactor', name: 'Safety Factor', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const minRating = inputs.loadCurrent * inputs.safetyFactor;
+              const standardRatings = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630];
+              const recommended = standardRatings.find(r => r >= minRating) || 'Above 630A';
+              return { min: minRating.toFixed(1), recommended };
+            },
+            resultLabel: 'CB Rating',
+            multiResult: true
+          },
+          {
+            id: 'transformer-sizing',
+            name: 'Transformer Sizing Calculator',
+            formula: 'kVA = (Total Connected Load × DF) / PF',
+            explanation: 'Transformer capacity must handle connected load considering demand factor and power factor. Add margin for future expansion (typically 20-30%).',
+            variables: [
+              { id: 'connectedLoad', name: 'Connected Load', unit: 'kW', symbol: 'kW' },
+              { id: 'demandFactor', name: 'Demand Factor', unit: '', symbol: '' },
+              { id: 'powerFactor', name: 'Power Factor', unit: '', symbol: '' },
+              { id: 'margin', name: 'Growth Margin', unit: '%', symbol: '%' }
+            ],
+            calculate: (inputs) => {
+              const baseKVA = (inputs.connectedLoad * inputs.demandFactor) / inputs.powerFactor;
+              const withMargin = baseKVA * (1 + inputs.margin/100);
+              const standardKVA = [25, 50, 63, 100, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500];
+              const recommended = standardKVA.find(s => s >= withMargin) || 'Above 2500kVA';
+              return { calculated: baseKVA.toFixed(2), withMargin: withMargin.toFixed(2), recommended };
+            },
+            resultLabel: 'Transformer kVA',
+            multiResult: true
+          },
+          {
+            id: 'generator-sizing',
+            name: 'Generator Sizing Calculator',
+            formula: 'kVA = (Running Load + Starting Load) / PF',
+            explanation: 'Generator must handle running loads plus motor starting currents (typically 6× rated). Consider voltage dip during motor starting for critical loads.',
+            variables: [
+              { id: 'runningLoad', name: 'Running Load', unit: 'kW', symbol: 'kW' },
+              { id: 'largestMotor', name: 'Largest Motor', unit: 'kW', symbol: 'kW' },
+              { id: 'startingMultiplier', name: 'Starting Current Multiplier', unit: '', symbol: '' },
+              { id: 'powerFactor', name: 'Power Factor', unit: '', symbol: '' }
+            ],
+            calculate: (inputs) => {
+              const startingKW = inputs.largestMotor * inputs.startingMultiplier;
+              const totalKW = inputs.runningLoad + startingKW - inputs.largestMotor;
+              const kva = totalKW / inputs.powerFactor;
+              return { kw: totalKW.toFixed(2), kva: kva.toFixed(2) };
+            },
+            resultLabel: 'Generator Capacity',
+            multiResult: true
+          }
+        ]
+      },
+      {
+        id: 'smart-grid',
+        icon: '🌐',
+        title: 'Smart Grid & Modern',
+        description: 'Harmonics, Power Quality, Storage',
+        calculators: [
+          {
+            id: 'thd',
+            name: 'Total Harmonic Distortion (THD)',
+            formula: 'THD = √(V₂² + V₃² + ... + Vₙ²) / V₁ × 100%',
+            explanation: 'THD measures distortion in voltage or current waveform due to harmonics. High THD causes heating, equipment malfunction, and power quality issues.',
+            variables: [
+              { id: 'v1', name: 'Fundamental (V₁)', unit: 'Volts', symbol: 'V' },
+              { id: 'v3', name: '3rd Harmonic (V₃)', unit: 'Volts', symbol: 'V' },
+              { id: 'v5', name: '5th Harmonic (V₅)', unit: 'Volts', symbol: 'V' },
+              { id: 'v7', name: '7th Harmonic (V₇)', unit: 'Volts', symbol: 'V' }
+            ],
+            calculate: (inputs) => {
+              const harmonicsSum = Math.sqrt(
+                (inputs.v3 || 0)**2 + (inputs.v5 || 0)**2 + (inputs.v7 || 0)**2
+              );
+              const thd = (harmonicsSum / inputs.v1) * 100;
+              return thd.toFixed(2);
+            },
+            resultLabel: 'THD (%)'
+          },
+          {
+            id: 'power-quality',
+            name: 'Power Quality Index',
+            formula: 'PQI = f(THD, PF, Voltage Deviation)',
+            explanation: 'Power quality combines multiple factors: harmonic distortion, power factor, voltage stability, and frequency deviation. Good PQ is essential for sensitive equipment.',
+            variables: [
+              { id: 'thd', name: 'THD', unit: '%', symbol: '%' },
+              { id: 'pf', name: 'Power Factor', unit: '', symbol: '' },
+              { id: 'vdev', name: 'Voltage Deviation', unit: '%', symbol: '%' }
+            ],
+            calculate: (inputs) => {
+              // Simple PQ scoring (100 = perfect)
+              const thdScore = Math.max(0, 100 - inputs.thd * 5);
+              const pfScore = inputs.pf * 100;
+              const vScore = Math.max(0, 100 - inputs.vdev * 10);
+              const pqi = (thdScore + pfScore + vScore) / 3;
+              return { pqi: pqi.toFixed(1), grade: pqi > 90 ? 'Excellent' : pqi > 70 ? 'Good' : pqi > 50 ? 'Fair' : 'Poor' };
+            },
+            resultLabel: 'Power Quality Index',
+            multiResult: true
+          },
+          {
+            id: 'energy-storage',
+            name: 'Energy Storage Sizing',
+            formula: 'E = P × t / η',
+            explanation: 'Energy storage capacity depends on required power, duration, and round-trip efficiency. Consider degradation over lifetime and depth of discharge limits.',
+            variables: [
+              { id: 'power', name: 'Required Power', unit: 'kW', symbol: 'kW' },
+              { id: 'duration', name: 'Duration', unit: 'Hours', symbol: 'h' },
+              { id: 'efficiency', name: 'Round-trip Efficiency', unit: '%', symbol: '%' },
+              { id: 'dod', name: 'Max Depth of Discharge', unit: '%', symbol: '%' }
+            ],
+            calculate: (inputs) => {
+              const usableEnergy = inputs.power * inputs.duration;
+              const totalEnergy = usableEnergy / (inputs.efficiency/100);
+              const installedCapacity = totalEnergy / (inputs.dod/100);
+              return { 
+                usable: usableEnergy.toFixed(2), 
+                total: totalEnergy.toFixed(2),
+                installed: installedCapacity.toFixed(2)
+              };
+            },
+            resultLabel: 'Energy Storage (kWh)',
+            multiResult: true
+          },
+          {
+            id: 'demand-response',
+            name: 'Demand Response Savings',
+            formula: 'Savings = ΔP × Peak Rate × Hours',
+            explanation: 'Demand response reduces load during peak periods for cost savings and grid stability. Calculate potential savings from load shifting or curtailment.',
+            variables: [
+              { id: 'loadReduction', name: 'Load Reduction', unit: 'kW', symbol: 'kW' },
+              { id: 'peakRate', name: 'Peak Rate', unit: '$/kWh', symbol: '$/kWh' },
+              { id: 'hours', name: 'Peak Hours/Day', unit: 'Hours', symbol: 'h' },
+              { id: 'days', name: 'Days per Month', unit: 'Days', symbol: 'days' }
+            ],
+            calculate: (inputs) => {
+              const dailySavings = inputs.loadReduction * inputs.peakRate * inputs.hours;
+              const monthlySavings = dailySavings * inputs.days;
+              const annualSavings = monthlySavings * 12;
+              return { 
+                daily: dailySavings.toFixed(2), 
+                monthly: monthlySavings.toFixed(2),
+                annual: annualSavings.toFixed(2)
+              };
+            },
+            resultLabel: 'Savings ($)',
+            multiResult: true
+          }
+        ]
+      }
+    ];
+
+    // State
+    let currentView = 'categories';
+    let currentCategory = null;
+    let currentCalculator = null;
+
+    // Element SDK initialization
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('main-title').textContent = config.main_title || defaultConfig.main_title;
+          document.getElementById('subtitle').textContent = config.subtitle || defaultConfig.subtitle;
+          document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => { config.background_color = value; window.elementSdk.setConfig({ background_color: value }); }
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => { config.secondary_color = value; window.elementSdk.setConfig({ secondary_color: value }); }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => { config.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+            },
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => { config.primary_color = value; window.elementSdk.setConfig({ primary_color: value }); }
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => { config.accent_color = value; window.elementSdk.setConfig({ accent_color: value }); }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['main_title', config.main_title || defaultConfig.main_title],
+          ['subtitle', config.subtitle || defaultConfig.subtitle]
+        ])
+      });
+    }
+
+    // Render categories grid
+    function renderCategories() {
+      const container = document.getElementById('categories-view');
+      container.innerHTML = categories.map(cat => `
+        <button onclick="openCategory('${cat.id}')" class="category-card rounded-xl p-5 text-left hover:cursor-pointer fade-in">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-3xl">${cat.icon}</span>
+            <h3 class="text-lg font-bold text-white">${cat.title}</h3>
+          </div>
+          <p class="text-slate-400 text-sm">${cat.description}</p>
+          <div class="mt-3 text-xs text-cyan-400">${cat.calculators.length} calculators</div>
+        </button>
+      `).join('');
+    }
+
+    // Open category
+    function openCategory(catId) {
+      currentCategory = categories.find(c => c.id === catId);
+      currentView = 'category';
+      renderCategoryCalculators();
+    }
+
+    // Render calculator list for a category
+    function renderCategoryCalculators() {
+      document.getElementById('categories-view').classList.add('hidden');
+      document.getElementById('calculator-view').classList.remove('hidden');
+      document.getElementById('home-btn').classList.remove('hidden');
+
+      const container = document.getElementById('calc-content');
+      container.innerHTML = `
+        <div class="mb-6 fade-in">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-4xl">${currentCategory.icon}</span>
+            <div>
+              <h2 class="text-2xl font-bold text-white">${currentCategory.title}</h2>
+              <p class="text-slate-400">${currentCategory.description}</p>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${currentCategory.calculators.map(calc => `
+            <button onclick="openCalculator('${calc.id}')" class="category-card rounded-xl p-4 text-left hover:cursor-pointer fade-in">
+              <h3 class="font-semibold text-white mb-2">${calc.name}</h3>
+              <p class="mono text-cyan-400 text-sm mb-2">${calc.formula}</p>
+              <p class="text-slate-500 text-xs line-clamp-2">${calc.explanation.substring(0, 80)}...</p>
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Open specific calculator
+    function openCalculator(calcId) {
+      currentCalculator = currentCategory.calculators.find(c => c.id === calcId);
+      renderCalculator();
+    }
+
+    // Render calculator interface
+    function renderCalculator() {
+      const calc = currentCalculator;
+      const container = document.getElementById('calc-content');
+      
+      container.innerHTML = `
+        <div class="fade-in">
+          <button onclick="backToCategory()" class="back-btn px-3 py-1.5 rounded-lg text-sm text-slate-300 mb-4">
+            ← Back to ${currentCategory.title}
+          </button>
+          
+          <div class="category-card rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-bold text-white mb-2">${calc.name}</h2>
+            <div class="formula-box rounded-lg p-4 mb-4">
+              <p class="text-xs text-amber-400 uppercase tracking-wide mb-1">Formula</p>
+              <p class="mono text-lg text-amber-200">${calc.formula}</p>
+            </div>
+            <div class="explanation-box rounded-lg p-4">
+              <p class="text-xs text-violet-400 uppercase tracking-wide mb-1">Explanation</p>
+              <p class="text-slate-300 text-sm leading-relaxed">${calc.explanation}</p>
+            </div>
+          </div>
+          
+          <div class="category-card rounded-xl p-6">
+            <h3 class="font-semibold text-white mb-4">Enter Values</h3>
+            
+            ${calc.variables.filter(v => v.id !== (calc.resultLabel ? '' : 'result')).map((v, idx) => `
+              <div class="mb-4 input-flow" style="animation-delay: ${idx * 0.1}s">
+                <label class="block text-sm text-slate-400 mb-1">${v.name} ${v.unit ? `(${v.unit})` : ''}</label>
+                <input 
+                  type="number" 
+                  id="input-${v.id}" 
+                  step="any"
+                  placeholder="Enter ${v.symbol || v.name}"
+                  class="calc-input w-full px-4 py-3 rounded-lg text-white mono"
+                />
+              </div>
+            `).join('')}
+            
+            ${calc.variables.length > 2 && !calc.resultLabel ? `
+              <div class="mb-4 input-flow" style="animation-delay: ${calc.variables.length * 0.1}s">
+                <label class="block text-sm text-slate-400 mb-1">Solve For</label>
+                <select id="solve-for" class="calc-input w-full px-4 py-3 rounded-lg text-white">
+                  ${calc.variables.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}
+                </select>
+              </div>
+            ` : ''}
+            
+            <button onclick="calculate()" class="calc-btn w-full py-3 rounded-lg font-semibold text-white mt-2">
+              Calculate
+            </button>
+            
+            <div id="result-container" class="hidden mt-6">
+              <div id="animation-container" class="mb-4"></div>
+              
+              <div class="result-box rounded-lg p-4 mb-4 result-animate">
+                <p class="text-xs text-emerald-400 uppercase tracking-wide mb-2">Result</p>
+                <div id="result-display" class="mono text-2xl text-emerald-300"></div>
+              </div>
+              
+              <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                <p class="text-xs text-blue-400 uppercase tracking-wide mb-3 font-semibold">Step-by-Step Solution</p>
+                <div id="steps-display" class="space-y-3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Calculate function with step-by-step explanation and animations
+    function calculate() {
+      const calc = currentCalculator;
+      const inputs = {};
+      
+      calc.variables.forEach(v => {
+        const input = document.getElementById(`input-${v.id}`);
+        if (input && input.value) {
+          inputs[v.id] = parseFloat(input.value);
+        }
+      });
+      
+      const solveFor = document.getElementById('solve-for')?.value;
+      
+      try {
+        let result;
+        let steps = [];
+        
+        if (calc.resultLabel || calc.multiResult) {
+          result = calc.calculate(inputs);
+          steps = generateSteps(calc, inputs);
+        } else {
+          result = calc.calculate(inputs, solveFor);
+          steps = generateSteps(calc, inputs, solveFor);
+        }
+        
+        const resultContainer = document.getElementById('result-container');
+        const resultDisplay = document.getElementById('result-display');
+        const stepsDisplay = document.getElementById('steps-display');
+        const animContainer = document.getElementById('animation-container');
+        
+        resultContainer.classList.remove('hidden');
+        
+        // Generate context-specific animations
+        const animHTML = generateAnimation(calc.id, inputs, result);
+        animContainer.innerHTML = animHTML;
+        
+        if (typeof result === 'object' && result !== null) {
+          resultDisplay.innerHTML = Object.entries(result).map(([key, value]) => {
+            const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+            const formattedValue = typeof value === 'number' ? formatNumber(value) : value;
+            return `<div class="mb-2"><span class="text-slate-400 text-sm">${displayKey}:</span> <span class="text-emerald-300">${formattedValue}</span></div>`;
+          }).join('');
+        } else {
+          const label = calc.resultLabel || calc.variables.find(v => v.id === solveFor)?.name || 'Result';
+          const unit = calc.variables.find(v => v.id === solveFor)?.unit || '';
+          resultDisplay.innerHTML = `
+            <div><span class="text-slate-400 text-sm">${label}:</span></div>
+            <div class="text-2xl">${formatNumber(result)} ${unit}</div>
+          `;
+        }
+        
+        // Display step-by-step solution
+        stepsDisplay.innerHTML = steps.map((step, idx) => `
+          <div class="bg-slate-700/50 rounded p-3" style="animation: flowDown 0.6s ease-out ${idx * 0.1}s both">
+            <p class="text-xs text-blue-300 font-semibold mb-1">Step ${idx + 1}: ${step.title}</p>
+            <p class="text-slate-300 text-sm mono">${step.description}</p>
+            ${step.formula ? `<p class="text-cyan-300 text-sm mt-1 mono">${step.formula}</p>` : ''}
+          </div>
+        `).join('');
+      } catch (error) {
+        const resultContainer = document.getElementById('result-container');
+        const resultDisplay = document.getElementById('result-display');
+        resultContainer.classList.remove('hidden');
+        resultDisplay.innerHTML = `<span class="text-red-400">Error: Please check your inputs</span>`;
+      }
+    }
+
+    // Generate context-specific animations based on calculator type
+    function generateAnimation(calcId, inputs, result) {
+      let html = '';
+      
+      if (calcId === 'ohms-law') {
+        const voltage = inputs.voltage || (inputs.current * inputs.resistance);
+        const current = inputs.current || (inputs.voltage / inputs.resistance);
+        const resistance = inputs.resistance || (inputs.voltage / inputs.current);
+        html = `
+          <div class="circuit-diagram">
+            <div class="component" style="left: 20px; top: 50px; width: 60px; height: 40px; background: rgba(14, 165, 233, 0.2); border: 2px solid #0ea5e9;">
+              <span class="text-sm">+${voltage.toFixed(1)}V</span>
+            </div>
+            <div class="wire" style="top: 70px; left: 90px; width: 80px;"></div>
+            <div class="component" style="left: 180px; top: 50px; width: 60px; height: 40px; background: rgba(56, 189, 248, 0.2); border: 2px solid #38bdf8;">
+              <span class="text-sm">${resistance.toFixed(1)}Ω</span>
+            </div>
+            <div class="energy-flow" style="left: 100px; top: 69px; animation-delay: 0s;"></div>
+            <div class="energy-flow" style="left: 150px; top: 69px; animation-delay: 0.5s;"></div>
+            <div class="energy-flow" style="left: 200px; top: 69px; animation-delay: 1s;"></div>
+          </div>
+          <div class="text-center text-sm text-slate-400 mt-2">
+            Current flowing: <span class="text-cyan-400 font-semibold">${current.toFixed(2)} A</span>
+          </div>
+        `;
+      } else if (calcId === 'power-law') {
+        const power = typeof result === 'object' ? result.powerW : result;
+        const percentage = Math.min(100, (power / 1000) * 100);
+        html = `
+          <div class="mb-4">
+            <p class="text-sm text-slate-400 mb-2">Power Dissipation Level</p>
+            <div class="heat-map">
+              <div class="heat-indicator" style="width: ${percentage}%; left: 0;"></div>
+            </div>
+            <p class="text-xs text-slate-500 text-right mt-1">${percentage.toFixed(1)}% of scale</p>
+          </div>
+        `;
+      } else if (calcId === 'series-resistance') {
+        let resistances = [];
+        ['r1', 'r2', 'r3', 'r4'].forEach(k => {
+          if (inputs[k]) resistances.push(inputs[k]);
+        });
+        const total = resistances.reduce((a, b) => a + b, 0);
+        html = `
+          <div class="bg-slate-700/30 rounded-lg p-4">
+            <p class="text-sm text-slate-400 mb-3">Resistance Addition</p>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              ${resistances.map((r, i) => `
+                <div class="flex-1 text-center" style="animation: flowRight ${0.5 + i*0.1}s ease-out">
+                  <div class="bg-slate-600/50 p-2 rounded mb-1">${r}Ω</div>
+                  <div class="text-xs text-slate-500">R${i+1}</div>
+                </div>
+              `).join('')}
+              <div class="text-cyan-400 text-lg font-bold">=</div>
+              <div style="animation: flowDown 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)">
+                <div class="bg-emerald-500/30 p-3 rounded border border-emerald-400">${total}Ω</div>
+                <div class="text-xs text-emerald-400 text-center mt-1">Total</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (calcId === 'parallel-resistance') {
+        let resistances = [];
+        ['r1', 'r2', 'r3', 'r4'].forEach(k => {
+          if (inputs[k]) resistances.push(inputs[k]);
+        });
+        const total = resistances.length > 0 ? 1 / resistances.reduce((sum, r) => sum + 1/r, 0) : 0;
+        html = `
+          <div class="bg-slate-700/30 rounded-lg p-4">
+            <p class="text-sm text-slate-400 mb-3">Parallel Resistance Network</p>
+            <div class="space-y-2">
+              ${resistances.map((r, i) => `
+                <div class="flex items-center justify-between" style="animation: flowRight ${0.3 + i*0.1}s ease-out">
+                  <span class="text-slate-400">R${i+1}</span>
+                  <div class="flex-1 mx-2 h-1 bg-gradient-to-r from-slate-600 to-slate-700 rounded"></div>
+                  <span class="text-cyan-400">${r}Ω</span>
+                </div>
+              `).join('')}
+              <div class="border-t border-slate-600 pt-2 mt-2 text-center" style="animation: flowDown 1s ease-out">
+                <p class="text-emerald-400 font-semibold">${total.toFixed(2)}Ω Total</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (calcId === 'voltage-divider') {
+        const vout = typeof result === 'object' ? Object.values(result)[0] : result;
+        const percentage = (vout / inputs.vin) * 100;
+        html = `
+          <div class="mb-4">
+            <p class="text-sm text-slate-400 mb-2">Voltage Division</p>
+            <div class="space-y-2">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Input: ${inputs.vin}V</span>
+                  <span class="text-cyan-400">100%</span>
+                </div>
+                <div class="h-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded overflow-hidden">
+                  <div class="h-full progress-bar" style="--fill-width: 100%;"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Output: ${vout.toFixed(2)}V</span>
+                  <span class="text-emerald-400">${percentage.toFixed(1)}%</span>
+                </div>
+                <div class="h-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded overflow-hidden">
+                  <div class="h-full progress-bar" style="--fill-width: ${percentage}%; animation-delay: 0.3s;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (calcId === 'rms-values') {
+        html = `
+          <div class="wave-animation">
+            <svg viewBox="0 0 400 100" class="sine-wave" style="filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));">
+              <defs>
+                <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#38bdf8;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <path d="M 0,50 Q 50,10 100,50 T 200,50 T 300,50 T 400,50" stroke="url(#waveGrad)" stroke-width="2" fill="none" opacity="0.6"/>
+              <path d="M 0,50 Q 50,10 100,50 T 200,50 T 300,50 T 400,50" stroke="#38bdf8" stroke-width="2" fill="none" opacity="0.3" style="animation: pulse-glow 2s infinite;"/>
+            </svg>
+          </div>
+          <div class="text-center text-sm text-slate-400 mt-2">
+            Peak: <span class="text-cyan-400">${inputs.vpeak}V</span> | 
+            RMS: <span class="text-emerald-400">${(inputs.vpeak / Math.sqrt(2)).toFixed(2)}V</span>
+          </div>
+        `;
+      } else if (calcId === 'synchronous-speed') {
+        const speed = typeof result === 'object' ? Object.values(result)[0] : result;
+        const rotation = (speed / 3600) * 100; // Convert to percentage for animation
+        html = `
+          <div class="text-center">
+            <div class="inline-flex items-center justify-center w-40 h-40 rounded-full border-4 border-slate-600 relative" style="animation: spin-slow ${(3600/speed).toFixed(2)}s linear infinite;">
+              <div class="absolute w-32 h-32 border-2 border-slate-700 rounded-full opacity-50"></div>
+              <div class="text-center z-10" style="animation: spin-slow ${-(3600/speed).toFixed(2)}s linear infinite;">
+                <p class="text-cyan-400 font-semibold">${speed.toFixed(0)}</p>
+                <p class="text-xs text-slate-400">RPM</p>
+              </div>
+            </div>
+            <p class="text-sm text-slate-400 mt-4">Rotating at pole frequency...</p>
+          </div>
+        `;
+      } else if (calcId === 'three-phase-power') {
+        html = `
+          <div class="space-y-2">
+            <p class="text-sm text-slate-400 mb-3">Three-Phase Distribution (120° apart)</p>
+            <div class="flex justify-around items-end h-24" style="perspective: 1000px;">
+              <div class="text-center">
+                <div class="w-8 harmonic-bar" style="height: 60%; animation-delay: 0s;"></div>
+                <p class="text-xs text-slate-400 mt-1">Phase A</p>
+              </div>
+              <div class="text-center">
+                <div class="w-8 harmonic-bar" style="height: 60%; animation-delay: 0.5s;"></div>
+                <p class="text-xs text-slate-400 mt-1">Phase B</p>
+              </div>
+              <div class="text-center">
+                <div class="w-8 harmonic-bar" style="height: 60%; animation-delay: 1s;"></div>
+                <p class="text-xs text-slate-400 mt-1">Phase C</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (calcId === 'thd') {
+        const thd = typeof result === 'object' ? Object.values(result)[0] : result;
+        const thdNum = parseFloat(thd);
+        html = `
+          <div class="mb-4">
+            <p class="text-sm text-slate-400 mb-2">Harmonic Distortion Level</p>
+            <div class="mb-3">
+              <div class="h-4 bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500 rounded-full overflow-hidden">
+                <div class="h-full progress-bar" style="--fill-width: ${Math.min(100, thdNum * 2)}%; background: linear-gradient(90deg, #38bdf8, #0ea5e9);"></div>
+              </div>
+            </div>
+            <div class="text-center text-sm">
+              <span class="text-cyan-400 font-semibold">${thdNum.toFixed(1)}%</span>
+              <span class="text-slate-500"> - ${thdNum < 5 ? 'Excellent' : thdNum < 10 ? 'Good' : thdNum < 20 ? 'Fair' : 'Poor'}</span>
+            </div>
+          </div>
+        `;
+      } else if (calcId.includes('motor') || calcId.includes('generator')) {
+        html = `
+          <div class="text-center">
+            <p class="text-sm text-slate-400 mb-3">Calculation in Progress...</p>
+            <div class="spinner mx-auto"></div>
+          </div>
+        `;
+      }
+      
+      return html;
+    }
+
+    // Generate step-by-step explanation
+    function generateSteps(calc, inputs, solveFor) {
+      const steps = [];
+      const calc_id = calc.id;
+      
+      // Gather input step
+      steps.push({
+        title: 'Identify Given Values',
+        description: Object.entries(inputs).map(([key, value]) => {
+          const varInfo = calc.variables.find(v => v.id === key);
+          return `${varInfo?.symbol || key} = ${value}`;
+        }).join(', '),
+        formula: null
+      });
+      
+      // Show formula
+      steps.push({
+        title: 'Apply Formula',
+        description: `Using the formula for ${calc.name}:`,
+        formula: calc.formula
+      });
+      
+      // Specific step-by-step for different calculators
+      if (calc_id === 'ohms-law') {
+        const { voltage, current, resistance } = inputs;
+        if (solveFor === 'voltage') {
+          steps.push({
+            title: 'Substitute Values',
+            description: `V = I × R`,
+            formula: `V = ${current} × ${resistance}`
+          });
+          steps.push({
+            title: 'Calculate',
+            description: `Multiply current by resistance`,
+            formula: `V = ${formatNumber(current * resistance)} V`
+          });
+        } else if (solveFor === 'current') {
+          steps.push({
+            title: 'Rearrange Formula',
+            description: `V = I × R → I = V / R`,
+            formula: null
+          });
+          steps.push({
+            title: 'Substitute Values',
+            description: `I = V / R`,
+            formula: `I = ${voltage} / ${resistance}`
+          });
+          steps.push({
+            title: 'Calculate',
+            description: `Divide voltage by resistance`,
+            formula: `I = ${formatNumber(voltage / resistance)} A`
+          });
+        } else if (solveFor === 'resistance') {
+          steps.push({
+            title: 'Rearrange Formula',
+            description: `V = I × R → R = V / I`,
+            formula: null
+          });
+          steps.push({
+            title: 'Substitute Values',
+            description: `R = V / I`,
+            formula: `R = ${voltage} / ${current}`
+          });
+          steps.push({
+            title: 'Calculate',
+            description: `Divide voltage by current`,
+            formula: `R = ${formatNumber(voltage / current)} Ω`
+          });
+        }
+      } else if (calc_id === 'power-law') {
+        const { power, voltage, current, resistance } = inputs;
+        if (solveFor === 'power') {
+          if (voltage && current) {
+            steps.push({
+              title: 'Substitute Values',
+              description: `Using P = V × I (Voltage × Current method)`,
+              formula: `P = ${voltage} × ${current}`
+            });
+            steps.push({
+              title: 'Calculate',
+              description: `Multiply voltage by current`,
+              formula: `P = ${formatNumber(voltage * current)} W`
+            });
+          }
+        }
+      } else if (calc_id === 'coulombs-law') {
+        const { force, q1, q2, distance } = inputs;
+        const k = 8.99e9;
+        if (solveFor === 'force') {
+          steps.push({
+            title: 'Set Constant',
+            description: `Coulomb constant k = 8.99 × 10⁹ N·m²/C²`,
+            formula: null
+          });
+          steps.push({
+            title: 'Substitute Values',
+            description: `F = k × (q₁ × q₂) / r²`,
+            formula: `F = 8.99×10⁹ × (${q1} × ${q2}) / ${distance}²`
+          });
+          steps.push({
+            title: 'Calculate Numerator',
+            description: `Multiply charges and Coulomb constant`,
+            formula: `Numerator = 8.99×10⁹ × ${q1 * q2} = ${formatNumber(k * q1 * q2)}`
+          });
+          steps.push({
+            title: 'Calculate Denominator',
+            description: `Square the distance`,
+            formula: `Denominator = ${distance}² = ${distance * distance}`
+          });
+          steps.push({
+            title: 'Final Division',
+            description: `Divide numerator by denominator`,
+            formula: `F = ${formatNumber(k * (q1 * q2) / (distance * distance))} N`
+          });
+        }
+      } else if (calc_id === 'series-resistance') {
+        steps.push({
+          title: 'Sum All Resistances',
+          description: `In series circuit, add all resistances:`,
+          formula: `R_total = R₁ + R₂ + R₃ + R₄`
+        });
+        let total = 0;
+        let calculation = [];
+        ['r1', 'r2', 'r3', 'r4'].forEach(key => {
+          if (inputs[key]) {
+            total += inputs[key];
+            calculation.push(inputs[key]);
+          }
+        });
+        steps.push({
+          title: 'Substitute Values',
+          description: `Enter your resistance values:`,
+          formula: calculation.join(' + ')
+        });
+        steps.push({
+          title: 'Calculate',
+          description: `Add all values together`,
+          formula: `R_total = ${formatNumber(total)} Ω`
+        });
+      } else if (calc_id === 'parallel-resistance') {
+        steps.push({
+          title: 'Use Parallel Formula',
+          description: `For parallel circuits, use reciprocal method:`,
+          formula: `1/R_total = 1/R₁ + 1/R₂ + 1/R₃ + 1/R₄`
+        });
+        let sum = 0;
+        let calculation = [];
+        ['r1', 'r2', 'r3', 'r4'].forEach(key => {
+          if (inputs[key]) {
+            sum += 1/inputs[key];
+            calculation.push(`1/${inputs[key]}`);
+          }
+        });
+        steps.push({
+          title: 'Calculate Reciprocals',
+          description: `Find reciprocal of each resistance:`,
+          formula: calculation.join(' + ')
+        });
+        steps.push({
+          title: 'Sum Reciprocals',
+          description: `Add all reciprocal values`,
+          formula: `Sum = ${formatNumber(sum)}`
+        });
+        steps.push({
+          title: 'Take Reciprocal of Sum',
+          description: `Invert the result to get total resistance`,
+          formula: `R_total = 1 / ${formatNumber(sum)} = ${formatNumber(1/sum)} Ω`
+        });
+      } else if (calc_id === 'voltage-divider') {
+        const { vin, r1, r2 } = inputs;
+        steps.push({
+          title: 'Apply Voltage Divider Rule',
+          description: `Output voltage is input voltage multiplied by ratio:`,
+          formula: `V_out = V_in × (R₂ / (R₁ + R₂))`
+        });
+        steps.push({
+          title: 'Calculate Total Resistance',
+          description: `Sum the two resistances:`,
+          formula: `R_total = ${r1} + ${r2} = ${formatNumber(r1 + r2)} Ω`
+        });
+        steps.push({
+          title: 'Calculate Ratio',
+          description: `Find the ratio R₂/(R₁+R₂):`,
+          formula: `Ratio = ${r2} / ${formatNumber(r1 + r2)} = ${formatNumber(r2 / (r1 + r2))}`
+        });
+        steps.push({
+          title: 'Calculate Output Voltage',
+          description: `Multiply input voltage by ratio:`,
+          formula: `V_out = ${vin} × ${formatNumber(r2 / (r1 + r2))} = ${formatNumber(vin * (r2 / (r1 + r2)))} V`
+        });
+      } else if (calc_id === 'rms-values') {
+        const { vpeak } = inputs;
+        steps.push({
+          title: 'Calculate RMS Value',
+          description: `RMS is peak divided by √2 (approximately 0.707):`,
+          formula: `V_rms = V_peak / √2 = ${vpeak} / 1.414`
+        });
+        steps.push({
+          title: 'RMS Result',
+          description: ``,
+          formula: `V_rms = ${formatNumber(vpeak / Math.sqrt(2))} V`
+        });
+        steps.push({
+          title: 'Calculate Average Value',
+          description: `Average is 0.637 times peak:`,
+          formula: `V_avg = 0.637 × ${vpeak}`
+        });
+        steps.push({
+          title: 'Average Result',
+          description: ``,
+          formula: `V_avg = ${formatNumber(vpeak * 0.637)} V`
+        });
+        steps.push({
+          title: 'Calculate Peak-to-Peak',
+          description: `Peak-to-peak is 2 times peak value:`,
+          formula: `V_pp = 2 × ${vpeak}`
+        });
+        steps.push({
+          title: 'Peak-to-Peak Result',
+          description: ``,
+          formula: `V_pp = ${formatNumber(vpeak * 2)} V`
+        });
+      } else if (calc_id === 'inductive-reactance') {
+        const { frequency, inductance } = inputs;
+        steps.push({
+          title: 'Use Inductive Reactance Formula',
+          description: `Inductive reactance depends on frequency and inductance:`,
+          formula: `X_L = 2πfL`
+        });
+        steps.push({
+          title: 'Calculate 2π',
+          description: `Calculate 2π constant:`,
+          formula: `2π ≈ 6.283`
+        });
+        steps.push({
+          title: 'Multiply Constants',
+          description: `Multiply 2π by frequency and inductance:`,
+          formula: `X_L = 6.283 × ${frequency} × ${inductance}`
+        });
+        steps.push({
+          title: 'Calculate Result',
+          description: `Final calculation:`,
+          formula: `X_L = ${formatNumber(2 * Math.PI * frequency * inductance)} Ω`
+        });
+      } else if (calc_id === 'synchronous-speed') {
+        const { frequency, poles } = inputs;
+        steps.push({
+          title: 'Apply Synchronous Speed Formula',
+          description: `Synchronous speed depends on frequency and pole pairs:`,
+          formula: `N_s = 120 × f / P`
+        });
+        steps.push({
+          title: 'Identify Values',
+          description: `Frequency = ${frequency} Hz, Poles = ${poles}`,
+          formula: null
+        });
+        steps.push({
+          title: 'Calculate',
+          description: `Multiply frequency by 120 and divide by poles:`,
+          formula: `N_s = 120 × ${frequency} / ${poles}`
+        });
+        steps.push({
+          title: 'Result',
+          description: `Synchronous speed in RPM:`,
+          formula: `N_s = ${formatNumber((120 * frequency) / poles)} RPM`
+        });
+      } else if (calc_id === 'three-phase-power') {
+        const { vl, il, pf } = inputs;
+        steps.push({
+          title: 'Use Three-Phase Power Formula',
+          description: `Three-phase power includes √3 factor:`,
+          formula: `P = √3 × V_L × I_L × cos(φ)`
+        });
+        steps.push({
+          title: 'Calculate √3',
+          description: `Square root of 3:`,
+          formula: `√3 ≈ 1.732`
+        });
+        steps.push({
+          title: 'Substitute Values',
+          description: `Input all parameters:`,
+          formula: `P = 1.732 × ${vl} × ${il} × ${pf}`
+        });
+        steps.push({
+          title: 'Calculate Real Power',
+          description: `Multiply all values:`,
+          formula: `P = ${formatNumber(Math.sqrt(3) * vl * il * pf)} W`
+        });
+      }
+      
+      return steps;
+    }
+
+    // Format number for display
+    function formatNumber(num) {
+      if (num === undefined || num === null || isNaN(num)) return 'N/A';
+      if (!isFinite(num)) return 'Infinity';
+      
+      const absNum = Math.abs(num);
+      if (absNum === 0) return '0';
+      if (absNum < 0.0001 || absNum >= 1e9) {
+        return num.toExponential(4);
+      }
+      if (absNum < 1) {
+        return num.toPrecision(4);
+      }
+      return num.toLocaleString('en-US', { maximumFractionDigits: 4 });
+    }
+
+    // Navigation functions
+    function backToCategory() {
+      currentCalculator = null;
+      renderCategoryCalculators();
+    }
+
+    function goHome() {
+      currentView = 'categories';
+      currentCategory = null;
+      currentCalculator = null;
+      document.getElementById('categories-view').classList.remove('hidden');
+      document.getElementById('calculator-view').classList.add('hidden');
+      document.getElementById('home-btn').classList.add('hidden');
+    }
+
+    // Event listeners
+    document.getElementById('home-btn').addEventListener('click', goHome);
+
+    // Initial render
+    renderCategories();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d524e6fa6d8c08d',t:'MTc3MjMwNjcxMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -2,46 +2,50 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>All-in-One Calculator</title>
 <meta name="google-site-verification" content="icGmfZhEIb7U1VZfl5L-AeYI9TrHmMPAq75uYzyyvOo" />
-</head>
 
 <style>
 * {
   box-sizing: border-box;
-  font-family: system-ui, Arial, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent; /* Removes blue highlight on mobile tap */
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
   background: #0f1115;
-  height: 100vh;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* Prevents bouncing/scrolling */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Calculator */
+/* Calculator Container - Adjusted for App feel */
 .calculator {
   width: 100%;
-  max-width: 420px;
-  height: 100vh;
+  max-width: 500px; /* Limit width on tablets but full on mobile */
+  height: 100dvh; /* Use Dynamic Viewport Height for mobile browsers */
   background: #15181e;
   display: flex;
   flex-direction: column;
-  color: white;
-  position: relative; /* Needed for absolute positioning of the credit */
+  position: relative;
   overflow: hidden;
 }
 
-/* Credit Badge */
+/* Credit Badge - Subtle positioning */
 .credit {
   position: absolute;
-  bottom: 8px;
-  right: 12px;
-  font-size: 10px;
-  color: #555;
-  pointer-events: none; /* User can click buttons under the text */
+  bottom: 4px;
+  width: 100%;
+  text-align: center;
+  font-size: 9px;
+  color: #444;
+  pointer-events: none;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   z-index: 5;
@@ -49,20 +53,22 @@ body {
 
 /* Top bar */
 .top-bar {
-  padding: 14px 16px;
+  padding: 16px;
   display: flex;
   align-items: center;
+  background: rgba(255,255,255,0.02);
 }
 
 .menu-btn {
-  font-size: 22px;
+  font-size: 24px;
   cursor: pointer;
+  padding-right: 15px;
 }
 
 .title {
-  margin: auto;
-  font-size: 16px;
-  opacity: 0.7;
+  font-size: 18px;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 /* Slide Menu */
@@ -70,15 +76,15 @@ body {
   position: absolute;
   top: 0;
   left: -100%;
-  width: 85%;
+  width: 100%;
   height: 100%;
-  background: #0f1115;
-  transition: 0.3s ease;
-  z-index: 10;
+  background: #2805a8;
+  transition: transform 0.3s ease;
+  z-index: 100;
 }
 
 .menu-container.open {
-  left: 0;
+  transform: translateX(100%);
 }
 
 .menu-container iframe {
@@ -87,9 +93,13 @@ body {
   border: none;
 }
 
-/* Display */
+/* Display Area - Flexible to push buttons down */
 .display {
-  padding: 20px;
+  flex: 1;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   text-align: right;
 }
 
@@ -98,56 +108,69 @@ body {
   background: transparent;
   border: none;
   outline: none;
-  color: white;
-  font-size: 26px;
+  color: #888;
+  font-size: 28px;
   text-align: right;
+  margin-bottom: 10px;
 }
 
 .result {
-  font-size: 40px;
-  min-height: 48px;
+  font-size: 48px;
+  font-weight: 600;
+  min-height: 58px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-/* Scientific */
+/* Scientific Buttons Row */
 .scientific {
-  display: flex;
-  gap: 6px;
-  padding: 6px 10px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 10px 16px;
 }
 
 .scientific button {
-  flex: 1;
-  height: 36px;
-  font-size: 14px;
-  border-radius: 8px;
+  height: 40px;
+  font-size: 13px;
+  border-radius: 12px;
+  background: #252a34;
 }
 
-/* Buttons */
+/* Main Buttons Grid */
 .buttons {
-  margin-top: auto;
-  padding: 10px 10px 25px 10px; /* Added bottom padding for credit space */
+  padding: 10px 16px 30px 16px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 button {
-  height: 58px;
+  height: 70px; /* Slightly taller for better thumb reach */
   border: none;
-  border-radius: 50%;
+  border-radius: 20px; /* Modern "Squircle" look */
   background: #1e222b;
   color: white;
-  font-size: 20px;
+  font-size: 22px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.1s, transform 0.1s;
 }
 
 button:active {
-  transform: scale(0.95);
+  background: #323846;
+  transform: scale(0.92);
 }
 
-.op { background: #2f80ed; }
-.equal { background: #aab3ff; color: black; }
-.clear { background: #ff7675; color: black; }
+.op { background: #2f80ed; color: white; }
+.equal { background: #7d8aff; color: white; }
+.clear { background: #ff7675; color: white; }
+
+/* Responsive adjustments for smaller phones */
+@media (max-height: 670px) {
+  button { height: 55px; border-radius: 15px; }
+  .result { font-size: 36px; }
+}
 </style>
 </head>
 
@@ -215,27 +238,26 @@ function toggleMenu() {
   menu.classList.toggle("open");
 }
 
-/* Calculator logic */
 const exprInput = document.getElementById("expression");
 const resultEl = document.getElementById("result");
 
-document.addEventListener("pointerdown", e => {
-  if (e.target.tagName !== "BUTTON") return;
+// Fixed event listener to handle touch and clicks properly
+document.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener("click", e => {
+    const v = btn.dataset.v;
+    const act = btn.dataset.act;
 
-  const v = e.target.dataset.v;
-  const act = e.target.dataset.act;
-
-  if (v) insertAtCursor(v);
-  if (act === "allclear") { exprInput.value = ""; resultEl.textContent = ""; }
-  if (act === "clear") backspace();
-  if (act === "calc") { 
-    if(resultEl.textContent) {
-        exprInput.value = resultEl.textContent;
-        resultEl.textContent = "";
+    if (v) insertAtCursor(v);
+    if (act === "allclear") { exprInput.value = ""; resultEl.textContent = ""; }
+    if (act === "clear") backspace();
+    if (act === "calc") { 
+        if(resultEl.textContent) {
+            exprInput.value = resultEl.textContent;
+            resultEl.textContent = "";
+        }
     }
-  }
-
-  liveCalculate();
+    liveCalculate();
+  });
 });
 
 function insertAtCursor(text) {
@@ -260,8 +282,10 @@ function liveCalculate() {
         return;
     }
     
+    // Simple math formatting for safety
     let res = eval(e);
-    resultEl.textContent = res;
+    // Round to 8 decimal places to avoid floating point issues (e.g. 0.1+0.2)
+    resultEl.textContent = Number.isInteger(res) ? res : parseFloat(res.toFixed(8));
   } catch {
     resultEl.textContent = "";
   }

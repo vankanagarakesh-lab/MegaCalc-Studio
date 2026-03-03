@@ -1,173 +1,308 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Math Graph</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Magic Exponential Grapher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root { --accent: #00d2ff; --bg: #0f1115; --panel: #1c1f26; --input-bg: #2a2e38; }
+        
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-<style>
-body {
-  margin: 0;
-  background: #0f1115;
-  font-family: Arial;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+        .mobile-app {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-.app {
-  width: 100%;
-  max-width: 420px;
-  height: 100vh;
-  background: #15181e;
-  padding: 12px;
-  color: white;
-}
+        /* Graph Section */
+        .graph-area {
+            position: relative;
+            background: #000;
+            flex: 1;
+            touch-action: none;
+            overflow: hidden;
+            border-bottom: 3px solid #333;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        .formula-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+            pointer-events: none;
+            z-index: 10;
+        }
 
-canvas {
-  background: white;
-  display: block;
-  margin: 10px auto;
-  border-radius: 8px;
-  cursor: grab;
-}
+        #coord-badge {
+            position: absolute;
+            background: white;
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 800;
+            pointer-events: none;
+            display: none;
+            z-index: 101;
+            box-shadow: 0 0 20px var(--accent);
+            transform: translate(-50%, -150%);
+        }
 
-canvas:active { cursor: grabbing; }
+        /* Controls Section */
+        .controls {
+            padding: 20px;
+            background: var(--panel);
+            border-radius: 25px 25px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            z-index: 110;
+            overflow-y: auto;
+        }
 
-input, select, button {
-  width: 100%;
-  padding: 8px;
-  margin-top: 6px;
-  border-radius: 6px;
-  border: none;
-  font-size: 14px;
-}
+        label { color: var(--accent); font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        
+        select, input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid #444;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 15px;
+        }
 
-input, select {
-  background: #1e222b;
-  color: white;
-}
+        .table-container {
+            background: #15181e;
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+        .table-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid #222;
+        }
+        .table-row input { 
+            width: 70px; 
+            background: #000; 
+            border: 1px solid #444; 
+            color: var(--accent); 
+            text-align: center; 
+            padding: 5px; 
+            margin: 0;
+        }
+        .y-res { font-weight: bold; font-family: monospace; color: white; }
 
-button {
-  background: #2f80ed;
-  color: white;
-}
-</style>
+        button.primary-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            background: var(--accent);
+            color: #000;
+            cursor: pointer;
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="app">
-<h3 style="text-align:center;">Exponential & Log Graph</h3>
+<div class="mobile-app">
+    <div class="graph-area">
+        <div class="formula-overlay">
+            <div id="formula-display" style="color:var(--accent); font-family: monospace; font-weight: bold;">y = e^x</div>
+        </div>
+        <div id="coord-badge"></div>
+        <canvas id="c"></canvas>
+    </div>
 
-<canvas id="c" width="360" height="360"></canvas>
+    <div class="controls">
+        <label>Pick a Magic Path</label>
+        <select id="type" onchange="redraw()">
+            <option value="exp">The Rocket Up (y = eˣ)</option>
+            <option value="pow">The Fast Growth (y = aˣ)</option>
+            <option value="log">The Ground Hugger (y = log x)</option>
+            <option value="ln">The Natural Curve (y = ln x)</option>
+        </select>
 
-<select id="type">
-  <option value="exp">y = eˣ</option>
-  <option value="pow">y = aˣ</option>
-  <option value="log">y = log x</option>
-  <option value="ln">y = ln x</option>
-</select>
+        <label>The "a" Multiplier</label>
+        <input type="number" id="a_val" value="2" step="0.5" oninput="redraw()">
 
-<input id="a" placeholder="a value (for aˣ)">
-<input id="xs" placeholder="Start x">
-<input id="xe" placeholder="End x">
-<input id="step" placeholder="Step (ex: 0.1)">
+        <label>Interactive Number Table (Edit X!)</label>
+        <div class="table-container" id="table-content"></div>
 
-<button onclick="draw()">Draw Graph</button>
+        <button class="primary-btn" onclick="resetView()">Reset & Center</button>
+    </div>
 </div>
 
 <script>
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
+const typeSelect = document.getElementById("type");
+const aInput = document.getElementById("a_val");
+const formulaDisp = document.getElementById("formula-display");
+const tableCont = document.getElementById("table-content");
+const badge = document.getElementById("coord-badge");
 
-let offX = 0, offY = 0, drag=false, px, py;
-let data = null;
-
-canvas.onmousedown = e => { drag=true; px=e.offsetX; py=e.offsetY; };
-canvas.onmouseup = () => drag=false;
-canvas.onmouseleave = () => drag=false;
-canvas.onmousemove = e => {
-  if(!drag) return;
-  offX += e.offsetX - px;
-  offY += e.offsetY - py;
-  px=e.offsetX; py=e.offsetY;
-  redraw();
+let state = {
+    scale: 50,
+    offX: 0,
+    offY: 0,
+    dragging: false,
+    lastMouse: { x: 0, y: 0 },
+    mousePos: { x: -1, y: -1 },
+    points: [0, 1, 2, 3, 4]
 };
 
-function func(type,x,a){
-  if(type==="exp") return Math.exp(x);
-  if(type==="pow") return Math.pow(a,x);
-  if(type==="log" && x>0) return Math.log10(x);
-  if(type==="ln" && x>0) return Math.log(x);
-  return NaN;
+function init() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    state.offX = canvas.width / 4;
+    state.offY = canvas.height * 0.75;
+    redraw();
 }
 
-function draw(){
-  offX=offY=0;
-  const type = document.getElementById("type").value;
-  const a = Number(document.getElementById("a").value)||2;
-  const xs = Number(document.getElementById("xs").value);
-  const xe = Number(document.getElementById("xe").value);
-  const h  = Number(document.getElementById("step").value);
-
-  let pts=[];
-  for(let x=xs;x<=xe;x+=h){
-    let y=func(type,x,a);
-    if(isFinite(y)) pts.push({x,y});
-  }
-
-  const ys=pts.map(p=>p.y);
-  data={
-    xs,xe,
-    ysMin:Math.min(...ys),
-    ysMax:Math.max(...ys),
-    pts
-  };
-  redraw();
+function calculate(x) {
+    const type = typeSelect.value;
+    const a = parseFloat(aInput.value) || 2;
+    if (type === "exp") return Math.exp(x);
+    if (type === "pow") return Math.pow(a, x);
+    if (type === "log") return x > 0 ? Math.log10(x) : null;
+    if (type === "ln") return x > 0 ? Math.log(x) : null;
+    return 0;
 }
 
-function redraw(){
-  if(!data) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  const {xs,xe,ysMin,ysMax,pts}=data;
-
-  // axes
-  const zx = (-xs)/(xe-xs)*canvas.width + offX;
-  const zy = (ysMax)/(ysMax-ysMin)*canvas.height + offY;
-
-  ctx.strokeStyle="black";
-  ctx.beginPath();
-  ctx.moveTo(0,zy); ctx.lineTo(canvas.width,zy);
-  ctx.moveTo(zx,0); ctx.lineTo(zx,canvas.height);
-  ctx.stroke();
-
-  // scale
-  ctx.fillStyle="black";
-  ctx.font="10px Arial";
-  for(let i=Math.ceil(xs);i<=xe;i++){
-    let x=(i-xs)/(xe-xs)*canvas.width+offX;
-    ctx.fillText(i,x-5,zy+12);
-  }
-  for(let j=Math.ceil(ysMin);j<=ysMax;j++){
-    let y=(ysMax-j)/(ysMax-ysMin)*canvas.height+offY;
-    ctx.fillText(j,zx+4,y+3);
-  }
-
-  // graph
-  ctx.strokeStyle="red";
-  ctx.beginPath();
-  pts.forEach((p,i)=>{
-    let x=(p.x-xs)/(xe-xs)*canvas.width+offX;
-    let y=(ysMax-p.y)/(ysMax-ysMin)*canvas.height+offY;
-    if(i===0) ctx.moveTo(x,y);
-    else ctx.lineTo(x,y);
-  });
-  ctx.stroke();
+function updateFormula() {
+    const type = typeSelect.value;
+    const a = aInput.value;
+    if (type === "exp") formulaDisp.innerText = "y = eˣ";
+    if (type === "pow") formulaDisp.innerText = `y = ${a}ˣ`;
+    if (type === "log") formulaDisp.innerText = "y = log₁₀(x)";
+    if (type === "ln") formulaDisp.innerText = "y = ln(x)";
 }
+
+function updateTable() {
+    tableCont.innerHTML = '';
+    state.points.forEach((x, i) => {
+        const y = calculate(x);
+        const row = document.createElement('div');
+        row.className = 'table-row';
+        row.innerHTML = `
+            <div><span style="font-size:9px;color:#555">INPUT X</span><br>
+            <input type="number" value="${x}" oninput="state.points[${i}]=parseFloat(this.value)||0; redraw()"></div>
+            <div style="color:#444">➜</div>
+            <div style="text-align:right"><span style="font-size:9px;color:#555">OUTPUT Y</span><br>
+            <div class="y-res">${y !== null ? y.toFixed(2) : 'NaN'}</div></div>
+        `;
+        tableCont.appendChild(row);
+    });
+}
+
+function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const { scale, offX, offY, mousePos } = state;
+
+    // Grid
+    ctx.strokeStyle = "#1a1a1a"; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = offX % scale; x < canvas.width; x += scale) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+    for (let y = offY % scale; y < canvas.height; y += scale) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+    ctx.stroke();
+
+    // Axes
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(0, offY); ctx.lineTo(canvas.width, offY); 
+    ctx.moveTo(offX, 0); ctx.lineTo(offX, canvas.height);
+    ctx.stroke();
+
+    // Plot
+    ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 4; ctx.lineJoin = "round";
+    ctx.shadowBlur = 15; ctx.shadowColor = "#00d2ff";
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px < canvas.width; px++) {
+        let x = (px - offX) / scale;
+        let y = calculate(x);
+        if (y === null || !isFinite(y)) { started = false; continue; }
+        let py = offY - (y * scale);
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else { if (py > -1000 && py < canvas.height + 1000) ctx.lineTo(px, py); }
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Tracker
+    if (mousePos.x !== -1 && !state.dragging) {
+        const mx = (mousePos.x - offX) / scale;
+        const my = calculate(mx);
+        if (my !== null && isFinite(my)) {
+            const py = offY - (my * scale);
+            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(mousePos.x, py, 8, 0, 7); ctx.fill();
+            badge.style.display = "block";
+            badge.style.left = mousePos.x + "px";
+            badge.style.top = py + "px";
+            badge.innerText = `x: ${mx.toFixed(2)}, y: ${my.toFixed(2)}`;
+        }
+    } else { badge.style.display = "none"; }
+
+    updateFormula();
+    updateTable();
+}
+
+function getPos(e) {
+    const t = e.touches ? e.touches[0] : e;
+    const rect = canvas.getBoundingClientRect();
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
+
+canvas.onmousedown = canvas.ontouchstart = (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    state.dragging = true;
+    const pos = getPos(e);
+    state.lastMouse = { x: pos.x, y: pos.y };
+};
+
+window.onmousemove = window.ontouchmove = (e) => {
+    const pos = getPos(e);
+    if (state.dragging) {
+        state.offX += pos.x - state.lastMouse.x;
+        state.offY += pos.y - state.lastMouse.y;
+        state.lastMouse = { x: pos.x, y: pos.y };
+        state.mousePos = { x: -1, y: -1 };
+    } else { state.mousePos = pos; }
+    redraw();
+};
+
+window.onmouseup = window.ontouchend = () => state.dragging = false;
+
+function resetView() {
+    state.scale = 50;
+    state.offX = canvas.width / 4;
+    state.offY = canvas.height * 0.75;
+    redraw();
+}
+
+window.onresize = init;
+init();
 </script>
-
 </body>
 </html>

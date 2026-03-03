@@ -1,146 +1,251 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Pan Graph</title>
-<meta name="viewport" content="width=device-width">
+    <meta charset="UTF-8">
+    <title>Pro Algebraic Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --accent: #00d2ff; --bg: #0f1115; --panel: #1c1f26; --input-bg: #2a2e38; }
+        body { margin: 0; background: var(--bg); font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; overflow: hidden; }
+        
+        .layout { display: flex; gap: 20px; align-items: flex-start; max-width: 95vw; }
+        
+        /* Table Style */
+        .table-panel { width: 220px; background: var(--panel); height: 620px; border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; }
+        .table-header { padding: 15px; background: #252a33; text-align: center; font-weight: bold; color: var(--accent); border-bottom: 1px solid #333; border-radius: 20px 20px 0 0; }
+        .table-controls { padding: 10px; background: #1e222b; border-bottom: 1px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .table-controls label { font-size: 10px; color: #888; text-transform: uppercase; }
+        .table-controls input { background: #15181e; border: 1px solid #444; color: white; padding: 4px; border-radius: 4px; font-size: 12px; width: 80%; outline: none; }
+        .table-controls input:focus { border-color: var(--accent); }
+        
+        .table-content { flex: 1; overflow-y: auto; padding: 10px; font-family: 'Consolas', monospace; font-size: 13px; }
+        .table-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2a2e38; }
+        .table-row:hover { background: rgba(255,255,255,0.03); }
 
-<style>
-body{
-  margin:0;
-  background:#0f1115;
-  font-family:Arial;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.app{
-  width:380px;
-  background:#15181e;
-  padding:10px;
-  color:white;
-}
-canvas{
-  background:white;
-  display:block;
-  margin:10px auto;
-  border-radius:6px;
-  cursor:grab;
-}
-canvas:active{ cursor:grabbing; }
-input,select,button{
-  width:100%;
-  padding:6px;
-  margin-top:6px;
-  border:none;
-  border-radius:4px;
-}
-input,select{ background:#1e222b; color:white; }
-button{ background:#2f80ed; color:white; }
-</style>
+        /* Main App Style */
+        .app { width: 440px; background: var(--panel); padding: 20px; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); border: 1px solid #333; }
+        .canvas-container { position: relative; background: #000; border-radius: 12px; margin-bottom: 15px; overflow: hidden; border: 1px solid #444; }
+        canvas { display: block; cursor: crosshair; }
+        
+        #coord-badge { position: absolute; background: var(--accent); color: #000; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; pointer-events: none; display: none; z-index: 100; }
+
+        .input-box { background: var(--input-bg); border: 1px solid #444; border-radius: 10px; padding: 12px 15px; margin-bottom: 10px; }
+        .input-label { color: var(--accent); font-size: 12px; margin-bottom: 5px; font-weight: bold; }
+        .formula-input { background: transparent; border: none; color: white; outline: none; width: 100%; font-size: 16px; font-family: 'Consolas', monospace; }
+
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        button { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #3d424d; color: white; transition: 0.2s; font-size: 12px; }
+        button.save { background: #27ae60; color: white; }
+        button.primary { background: var(--accent); color: #000; grid-column: span 2; }
+        button:hover { filter: brightness(1.2); transform: scale(1.02); }
+
+        .hint { font-size: 10px; color: #666; text-align: center; margin-top: 10px; line-height: 1.4; }
+    </style>
 </head>
-
 <body>
 
-<div class="app">
-<h3 style="text-align:center">Move the Graph</h3>
+<div class="layout">
+    <div class="table-panel">
+        <div class="table-header">Coordinate Table</div>
+        <div class="table-controls">
+            <div>
+                <label>Start X</label>
+                <input type="number" id="startX" value="-5" oninput="syncTableToGraph()">
+            </div>
+            <div>
+                <label>Step</label>
+                <input type="number" id="stepX" value="1" step="0.1" oninput="updateTable()">
+            </div>
+        </div>
+        <div class="table-content" id="table-body"></div>
+    </div>
 
-<canvas id="c" width="350" height="350"></canvas>
+    <div class="app">
+        <div class="canvas-container">
+            <div id="coord-badge"></div>
+            <canvas id="c" width="400" height="360"></canvas>
+        </div>
 
-<select id="type">
-  <option value="1x">y = 1/x</option>
-  <option value="1x2">y = 1/x²</option>
-  <option value="sqrt">y = √x</option>
-  <option value="cuberoot">y = ∛x</option>
-</select>
+        <div class="input-box">
+            <div class="input-label">Function f(x)</div>
+            <input class="formula-input" id="formula" value="x**2, 1/x" oninput="redraw()">
+        </div>
 
-<input id="range" placeholder="Range (example: 10)">
-<button onclick="draw()">Draw Graph</button>
+        <div class="controls">
+            <button onclick="setFormula('sqrt(x), cbrt(x)')">Roots</button>
+            <button onclick="setFormula('x**2, x**3')">Powers</button>
+            <button class="save" onclick="saveImage()">Save PNG</button>
+            <button onclick="resetView()">Reset View</button>
+            <button class="primary" onclick="redraw()">Render Graph</button>
+        </div>
+        <div class="hint">Numbers on axis update as you pan.<br>Change "Start X" to move graph.</div>
+    </div>
 </div>
 
 <script>
-const c = document.getElementById("c");
-const ctx = c.getContext("2d");
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const formulaInput = document.getElementById("formula");
+const badge = document.getElementById("coord-badge");
+const tableBody = document.getElementById("table-body");
+const startXInput = document.getElementById("startX");
+const stepXInput = document.getElementById("stepX");
 
-let offsetX = 0, offsetY = 0;
-let dragging = false;
-let lastX = 0, lastY = 0;
-let R = 10;
-let points = [];
+let state = {
+    scale: 50,
+    offX: 200,
+    offY: 180,
+    dragging: false,
+    lastMouse: { x: 0, y: 0 },
+    mousePos: { x: 0, y: 0 },
+    colors: ['#00d2ff', '#ff4757', '#2ed573', '#eccc68']
+};
 
-c.addEventListener("mousedown", e=>{
-  dragging = true;
-  lastX = e.offsetX;
-  lastY = e.offsetY;
-});
-
-c.addEventListener("mouseup", ()=> dragging=false);
-c.addEventListener("mouseleave", ()=> dragging=false);
-
-c.addEventListener("mousemove", e=>{
-  if(!dragging) return;
-  offsetX += e.offsetX - lastX;
-  offsetY += e.offsetY - lastY;
-  lastX = e.offsetX;
-  lastY = e.offsetY;
-  redraw();
-});
-
-function f(x){
-  let t = document.getElementById("type").value;
-  if(t==="1x" && x!==0) return 1/x;
-  if(t==="1x2" && x!==0) return 1/(x*x);
-  if(t==="sqrt" && x>=0) return Math.sqrt(x);
-  if(t==="cuberoot") return Math.cbrt(x);
-  return null;
+function getFunctions() {
+    return formulaInput.value.split(',').map(expr => {
+        try {
+            const mathProps = Object.getOwnPropertyNames(Math);
+            let fnBody = `const {${mathProps.join(',')}} = Math; return ${expr.trim()}`;
+            return new Function('x', fnBody);
+        } catch (e) { return null; }
+    });
 }
 
-function draw(){
-  offsetX = offsetY = 0;
-  R = Number(document.getElementById("range").value) || 10;
-  points = [];
-  for(let x=-R;x<=R;x+=0.05){
-    let y = f(x);
-    if(y!==null && isFinite(y)) points.push({x,y});
-  }
-  redraw();
+function syncTableToGraph() {
+    const startX = parseFloat(startXInput.value) || 0;
+    const f1 = getFunctions()[0];
+    if (f1) {
+        const y = f1(startX);
+        if (y !== null && isFinite(y)) {
+            // Recenter graph on this X point
+            state.offX = (canvas.width / 2) - (startX * state.scale);
+            state.offY = (canvas.height / 2) + (y * state.scale);
+        }
+    }
+    redraw();
 }
 
-function redraw(){
-  ctx.clearRect(0,0,350,350);
-
-  let cx = 175 + offsetX;
-  let cy = 175 + offsetY;
-  let scale = 175 / R;
-
-  // axes
-  ctx.strokeStyle="black";
-  ctx.beginPath();
-  ctx.moveTo(0,cy); ctx.lineTo(350,cy);
-  ctx.moveTo(cx,0); ctx.lineTo(cx,350);
-  ctx.stroke();
-
-  // scale numbers
-  ctx.fillStyle="black";
-  ctx.font="10px Arial";
-  for(let i=-R;i<=R;i++){
-    ctx.fillText(i,cx+i*scale-4,cy+12);
-    ctx.fillText(i,cx+4,cy-i*scale+3);
-  }
-
-  // graph
-  ctx.strokeStyle="red";
-  ctx.beginPath();
-  points.forEach((p,i)=>{
-    let x = cx + p.x * scale;
-    let y = cy - p.y * scale;
-    if(i===0) ctx.moveTo(x,y);
-    else ctx.lineTo(x,y);
-  });
-  ctx.stroke();
+function updateTable() {
+    const f1 = getFunctions()[0];
+    const startX = parseFloat(startXInput.value) || 0;
+    const step = parseFloat(stepXInput.value) || 1;
+    let html = '';
+    if (f1) {
+        for (let i = 0; i < 20; i++) {
+            let x = startX + (i * step);
+            let y = f1(x);
+            let yDisp = (y !== null && isFinite(y)) ? y.toFixed(2) : 'NaN';
+            html += `<div class="table-row"><span>x: ${x.toFixed(2)}</span><span style="color:var(--accent)">y: ${yDisp}</span></div>`;
+        }
+    }
+    tableBody.innerHTML = html;
 }
+
+function drawAxisLabels() {
+    const { scale, offX, offY } = state;
+    ctx.fillStyle = "#666";
+    ctx.font = "10px Arial";
+    ctx.textAlign = "center";
+
+    // X Axis Numbers
+    let xStep = scale > 100 ? 0.5 : (scale < 20 ? 5 : 1);
+    for (let x = Math.floor(-offX / (scale * xStep)) * xStep; x * scale + offX < canvas.width; x += xStep) {
+        if (x === 0) continue;
+        let px = x * scale + offX;
+        ctx.fillText(x.toFixed(1).replace(".0",""), px, offY + 15);
+        ctx.beginPath(); ctx.moveTo(px, offY - 3); ctx.lineTo(px, offY + 3); ctx.strokeStyle = "#444"; ctx.stroke();
+    }
+
+    // Y Axis Numbers
+    ctx.textAlign = "left";
+    for (let y = Math.floor((offY - canvas.height) / (scale * xStep)) * xStep; offY - y * scale > 0; y += xStep) {
+        if (y === 0) continue;
+        let py = offY - y * scale;
+        ctx.fillText(y.toFixed(1).replace(".0",""), offX + 8, py + 3);
+        ctx.beginPath(); ctx.moveTo(offX - 3, py); ctx.lineTo(offX + 3, py); ctx.strokeStyle = "#444"; ctx.stroke();
+    }
+}
+
+function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const { scale, offX, offY, mousePos } = state;
+
+    // Grid
+    ctx.strokeStyle = "#16191f"; ctx.lineWidth = 1; ctx.beginPath();
+    for (let i = offX % scale; i < canvas.width; i += scale) { ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); }
+    for (let j = offY % scale; j < canvas.height; j += scale) { ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); }
+    ctx.stroke();
+
+    // Axis Lines
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(0, offY); ctx.lineTo(canvas.width, offY);
+    ctx.moveTo(offX, 0); ctx.lineTo(offX, canvas.height);
+    ctx.stroke();
+
+    drawAxisLabels();
+
+    // Plots
+    const functions = getFunctions();
+    functions.forEach((f, idx) => {
+        if (!f) return;
+        ctx.strokeStyle = state.colors[idx % state.colors.length];
+        ctx.lineWidth = 3; ctx.shadowBlur = 8; ctx.shadowColor = ctx.strokeStyle;
+        ctx.beginPath();
+        let started = false, prevY = 0;
+        for (let px = 0; px < canvas.width; px++) {
+            let x = (px - offX) / scale;
+            let y = f(x);
+            if (y === null || isNaN(y) || !isFinite(y)) { started = false; continue; }
+            let py = offY - (y * scale);
+            if (!started || Math.abs(py - prevY) > canvas.height) { ctx.moveTo(px, py); started = true; }
+            else { ctx.lineTo(px, py); }
+            prevY = py;
+        }
+        ctx.stroke();
+    });
+    ctx.shadowBlur = 0;
+
+    // Crosshair
+    if(mousePos.x > 0) {
+        ctx.setLineDash([4, 4]); ctx.strokeStyle = "rgba(255,255,255,0.1)";
+        ctx.beginPath(); ctx.moveTo(mousePos.x, 0); ctx.lineTo(mousePos.x, canvas.height);
+        ctx.moveTo(0, mousePos.y); ctx.lineTo(canvas.width, mousePos.y); ctx.stroke();
+        ctx.setLineDash([]);
+    }
+    updateTable();
+}
+
+canvas.onmousedown = e => { state.dragging = true; state.lastMouse = { x: e.clientX, y: e.clientY }; };
+window.onmousemove = e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    state.mousePos = { x: mx, y: my };
+    if (state.dragging) {
+        state.offX += e.clientX - state.lastMouse.x; state.offY += e.clientY - state.lastMouse.y;
+        state.lastMouse = { x: e.clientX, y: e.clientY };
+    }
+    if (mx >= 0 && mx <= canvas.width && my >= 0 && my <= canvas.height) {
+        const mathX = (mx - state.offX) / state.scale;
+        const f1 = getFunctions()[0];
+        const mathY = f1 ? f1(mathX) : null;
+        badge.style.display = "block"; badge.style.left = (mx + 15) + "px"; badge.style.top = (my - 35) + "px";
+        badge.innerText = `x: ${mathX.toFixed(2)}, y: ${isFinite(mathY) ? mathY.toFixed(2) : '---'}`;
+    } else { badge.style.display = "none"; }
+    redraw();
+};
+window.onmouseup = () => state.dragging = false;
+canvas.onwheel = e => { e.preventDefault(); state.scale *= (e.deltaY < 0 ? 1.1 : 0.9); redraw(); };
+
+function setFormula(val) { formulaInput.value = val; redraw(); }
+function resetView() { state.scale = 50; state.offX = 200; state.offY = 180; redraw(); }
+function saveImage() {
+    const link = document.createElement('a');
+    link.download = 'graph.png';
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+redraw();
 </script>
-
 </body>
 </html>

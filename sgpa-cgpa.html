@@ -1,173 +1,620 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>SGPA & CGPA Calculator</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SGPA &amp; CGPA Calculator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Space Grotesk', sans-serif; }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f1419 0%, #1a2f4f 25%, #1a1f2e 50%, #2d1b4e 75%, #0f1419 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .glass-card {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .glass-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(15, 23, 42, 0.8);
+    }
+    
+    .glow-border {
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    
+    input, select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    
+    .input-glow {
+      background: rgba(30, 58, 138, 0.3) !important;
+      border: 1.5px solid rgba(99, 102, 241, 0.5) !important;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .input-glow:focus {
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.3);
+      transform: scale(1.02);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      active {
+        transform: scale(0.98);
+      }
+    }
+    
+    .btn-primary:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+    }
+    
+    .result-glow {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border: 1.5px solid rgba(34, 197, 94, 0.4);
+      box-shadow: 0 8px 32px rgba(34, 197, 94, 0.15);
+    }
+    
+    .tab-active {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .subject-card {
+      animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: transform;
+    }
+    
+    @keyframes slideIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(20px) scale(0.95);
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { 
+        opacity: 0; 
+        transform: scale(0.9);
+      }
+      to { 
+        opacity: 1; 
+        transform: scale(1);
+      }
+    }
+    
+    .fade-in { 
+      animation: fadeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .grade-badge {
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: default;
+      user-select: none;
+    }
+    
+    .grade-badge:active {
+      transform: scale(0.95);
+    }
+    
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem !important;
+    }
+    
+    .input-wrapper {
+      position: relative;
+    }
+    
+    .input-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #9ca3af;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .icon-badge {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 480px) {
+      .glass-card {
+        border-radius: 1rem;
+        padding: 1rem;
+      }
+      
+      button {
+        font-size: 1rem;
+        padding: 0.875rem 1rem;
+        min-height: 44px;
+      }
+      
+      input, select {
+        font-size: 1rem;
+        min-height: 44px;
+      }
+      
+      .subject-card {
+        border-radius: 0.75rem;
+      }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full gradient-bg text-white overflow-auto">
+  <div class="min-h-full w-full flex items-start justify-center p-3 sm:p-4 py-6 sm:py-8">
+   <div class="w-full max-w-md">
+    <!-- Header -->
+    <div class="text-center mb-8 sm:mb-10">
+     <div class="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-3xl icon-badge mb-4 sm:mb-6 shadow-lg shadow-indigo-500/30"><span class="text-4xl sm:text-5xl">🎓</span>
+     </div>
+     <h1 id="mainTitle" class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-indigo-300 bg-clip-text text-transparent mb-2 sm:mb-3">SGPA &amp; CGPA Calculator</h1>
+     <p class="text-gray-400 text-xs sm:text-sm leading-relaxed">Calculate your academic performance with precision</p>
+    </div><!-- Tab Switcher -->
+    <div class="glass-card glow-border rounded-2xl p-2 mb-6 sm:mb-8">
+     <div class="flex gap-2"><button id="sgpaTab" onclick="switchMode('sgpa')" class="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-300 tab-active text-white shadow-lg shadow-indigo-500/30"> 📊 SGPA </button> <button id="cgpaTab" onclick="switchMode('cgpa')" class="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-300 text-gray-400 hover:text-white hover:bg-white/10"> 📈 CGPA </button>
+     </div>
+    </div><!-- SGPA Section -->
+    <div id="sgpaBox" class="space-y-4">
+     <div class="glass-card glow-border rounded-2xl p-5 sm:p-6">
+      <label class="block text-xs sm:text-sm font-medium text-gray-300 mb-3 sm:mb-4"> <span class="flex items-center gap-2 sm:gap-3"> <span class="w-8 h-8 rounded-lg icon-badge flex items-center justify-center text-sm">📚</span> <span>Number of Subjects</span> </span> </label>
+      <div class="flex gap-2 sm:gap-3"><input id="subjectCount" type="number" min="1" max="15" placeholder="Enter subjects (1-15)" class="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-xl px-3 sm:px-4 py-3 text-white placeholder-gray-500 focus:outline-none input-glow transition-all text-sm sm:text-base"> <button onclick="createSubjects()" class="btn-primary px-4 sm:px-6 py-3 rounded-xl font-semibold text-xs sm:text-sm whitespace-nowrap"> Generate </button>
+      </div>
+     </div>
+     <div id="subjectInputs" class="space-y-3"></div>
+     <div id="sgpaCalcBtn" class="hidden"><button onclick="calculateSGPA()" class="w-full btn-primary py-4 sm:py-5 rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30"> <span>🧮</span> Calculate SGPA </button>
+     </div>
+    </div><!-- CGPA Section -->
+    <div id="cgpaBox" class="space-y-4 hidden">
+     <div class="glass-card glow-border rounded-2xl p-5 sm:p-6">
+      <label class="block text-xs sm:text-sm font-medium text-gray-300 mb-3 sm:mb-4"> <span class="flex items-center gap-2 sm:gap-3"> <span class="w-8 h-8 rounded-lg icon-badge flex items-center justify-center text-sm">📅</span> <span>Number of Semesters</span> </span> </label>
+      <div class="flex gap-2 sm:gap-3"><input id="semesterCount" type="number" min="1" max="12" placeholder="Enter semesters (1-12)" class="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-xl px-3 sm:px-4 py-3 text-white placeholder-gray-500 focus:outline-none input-glow transition-all text-sm sm:text-base"> <button onclick="createSemesters()" class="btn-primary px-4 sm:px-6 py-3 rounded-xl font-semibold text-xs sm:text-sm whitespace-nowrap"> Generate </button>
+      </div>
+     </div>
+     <div id="semesterInputs" class="space-y-3"></div>
+     <div id="cgpaCalcBtn" class="hidden"><button onclick="calculateCGPA()" class="w-full btn-primary py-4 sm:py-5 rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30"> <span>🧮</span> Calculate CGPA </button>
+     </div>
+    </div><!-- Results Section --> <!-- Results Section -->
+    <div id="resultSection" class="hidden mt-6 sm:mt-8 fade-in">
+     <div class="result-glow rounded-2xl p-6 sm:p-8">
+      <div class="text-center mb-6 sm:mb-8">
+       <div id="resultValue" class="text-6xl sm:text-7xl font-bold text-emerald-400 mb-3 sm:mb-4"></div>
+       <div id="resultLabel" class="text-gray-300 font-medium text-lg sm:text-xl"></div>
+       <div id="gradeRemark" class="mt-4 sm:mt-5"></div>
+      </div>
+      <div id="breakdown" class="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-emerald-500/20">
+       <div class="text-xs sm:text-sm font-semibold text-gray-300 mb-4 sm:mb-5 flex items-center gap-2"><span>📋</span> <span>Step-by-Step Calculation</span>
+       </div>
+       <div id="explainContent" class="text-xs sm:text-sm text-gray-400 space-y-2 sm:space-y-2"></div>
+      </div>
+     </div>
+    </div><!-- Quick Reference --> <!-- Quick Reference -->
+    <div class="mt-6 sm:mt-8 glass-card glow-border rounded-2xl p-5 sm:p-6">
+     <div class="text-xs sm:text-sm font-semibold text-gray-300 mb-4 sm:mb-5 flex items-center gap-2"><span>💡</span> <span>Grade Point Reference</span>
+     </div>
+     <div class="grid grid-cols-5 sm:grid-cols-6 gap-2 sm:gap-3 text-center text-xs">
+      <div class="grade-badge bg-emerald-500/20 text-emerald-400 rounded-lg p-2 sm:p-3 cursor-default">
+       <div class="font-bold text-sm">
+        O
+       </div>
+       <div class="text-gray-400 text-xs">
+        10
+       </div>
+      </div>
+      <div class="grade-badge bg-green-500/20 text-green-400 rounded-lg p-2 sm:p-3 cursor-default">
+       <div class="font-bold text-sm">
+        A+
+       </div>
+       <div class="text-gray-400 text-xs">
+        9
+       </div>
+      </div>
+      <div class="grade-badge bg-blue-500/20 text-blue-400 rounded-lg p-2 sm:p-3 cursor-default">
+       <div class="font-bold text-sm">
+        A
+       </div>
+       <div class="text-gray-400 text-xs">
+        8
+       </div>
+      </div>
+      <div class="grade-badge bg-indigo-500/20 text-indigo-400 rounded-lg p-2 sm:p-3 cursor-default">
+       <div class="font-bold text-sm">
+        B+
+       </div>
+       <div class="text-gray-400 text-xs">
+        7
+       </div>
+      </div>
+      <div class="grade-badge bg-purple-500/20 text-purple-400 rounded-lg p-2 sm:p-3 cursor-default">
+       <div class="font-bold text-sm">
+        B
+       </div>
+       <div class="text-gray-400 text-xs">
+        6
+       </div>
+      </div>
+      <div class="grade-badge bg-yellow-500/20 text-yellow-400 rounded-lg p-2 sm:p-3 cursor-default">
+       <div class="font-bold text-sm">
+        C
+       </div>
+       <div class="text-gray-400 text-xs">
+        5
+       </div>
+      </div>
+      <div class="grade-badge bg-orange-500/20 text-orange-400 rounded-lg p-2 sm:p-3 cursor-default">
+       <div class="font-bold text-sm">
+        D
+       </div>
+       <div class="text-gray-400 text-xs">
+        4
+       </div>
+      </div>
+      <div class="grade-badge bg-red-500/20 text-red-400 rounded-lg p-2 sm:p-3 cursor-default col-span-2 sm:col-span-3">
+       <div class="font-bold text-sm">
+        F
+       </div>
+       <div class="text-gray-400 text-xs">
+        0
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      main_title: 'SGPA & CGPA Calculator',
+      sgpa_label: 'SGPA',
+      cgpa_label: 'CGPA',
+      background_color: '#0c0f13',
+      primary_color: '#6366f1',
+      text_color: '#ffffff',
+      accent_color: '#22c55e',
+      surface_color: '#1e293b'
+    };
 
-<style>
-body{
-  margin:0;
-  background:#0f1115;
-  font-family:Arial;
-  color:white;
-}
-.app{
-  max-width:420px;
-  margin:auto;
-  padding:16px;
-}
-h2{
-  text-align:center;
-}
-input,select,button{
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  font-size:16px;
-  border-radius:8px;
-  border:none;
-}
-input,select{
-  background:#1e222b;
-  color:white;
-}
-button{
-  background:#2f80ed;
-  color:white;
-}
-.card{
-  background:#1e222b;
-  padding:12px;
-  border-radius:8px;
-  margin-top:10px;
-}
-.result{
-  font-size:22px;
-  text-align:center;
-  margin-top:12px;
-}
-.explain{
-  font-size:14px;
-  line-height:1.6;
-  margin-top:8px;
-}
-</style>
-</head>
+    let config = { ...defaultConfig };
 
-<body>
+    // Element SDK initialization
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          applyConfig();
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            {
+              get: () => cfg.background_color || defaultConfig.background_color,
+              set: (v) => window.elementSdk.setConfig({ background_color: v })
+            },
+            {
+              get: () => cfg.surface_color || defaultConfig.surface_color,
+              set: (v) => window.elementSdk.setConfig({ surface_color: v })
+            },
+            {
+              get: () => cfg.text_color || defaultConfig.text_color,
+              set: (v) => window.elementSdk.setConfig({ text_color: v })
+            },
+            {
+              get: () => cfg.primary_color || defaultConfig.primary_color,
+              set: (v) => window.elementSdk.setConfig({ primary_color: v })
+            },
+            {
+              get: () => cfg.accent_color || defaultConfig.accent_color,
+              set: (v) => window.elementSdk.setConfig({ accent_color: v })
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['main_title', cfg.main_title || defaultConfig.main_title],
+          ['sgpa_label', cfg.sgpa_label || defaultConfig.sgpa_label],
+          ['cgpa_label', cfg.cgpa_label || defaultConfig.cgpa_label]
+        ])
+      });
+    }
 
-<div class="app">
-<h2>🎓 SGPA & CGPA Calculator</h2>
+    function applyConfig() {
+      document.getElementById('mainTitle').textContent = config.main_title || defaultConfig.main_title;
+      document.getElementById('sgpaTab').innerHTML = `📊 ${config.sgpa_label || defaultConfig.sgpa_label}`;
+      document.getElementById('cgpaTab').innerHTML = `📈 ${config.cgpa_label || defaultConfig.cgpa_label}`;
+      
+      document.body.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, ${config.surface_color || defaultConfig.surface_color} 50%, ${config.background_color || defaultConfig.background_color} 100%)`;
+    }
 
-<select id="mode" onchange="switchMode()">
-  <option value="sgpa">SGPA Calculator</option>
-  <option value="cgpa">CGPA Calculator</option>
-</select>
+    let currentMode = 'sgpa';
 
-<!-- SGPA -->
-<div id="sgpaBox">
-  <input id="subjectCount" type="number" placeholder="Enter number of subjects">
-  <button onclick="createSubjects()">Create Subjects</button>
+    function switchMode(mode) {
+      currentMode = mode;
+      const sgpaBox = document.getElementById('sgpaBox');
+      const cgpaBox = document.getElementById('cgpaBox');
+      const sgpaTab = document.getElementById('sgpaTab');
+      const cgpaTab = document.getElementById('cgpaTab');
+      const resultSection = document.getElementById('resultSection');
 
-  <div id="subjectInputs"></div>
-  <button onclick="calculateSGPA()">Calculate SGPA</button>
-</div>
+      if (mode === 'sgpa') {
+        sgpaBox.classList.remove('hidden');
+        cgpaBox.classList.add('hidden');
+        sgpaTab.classList.add('tab-active', 'text-white');
+        sgpaTab.classList.remove('text-gray-400');
+        cgpaTab.classList.remove('tab-active', 'text-white');
+        cgpaTab.classList.add('text-gray-400');
+      } else {
+        sgpaBox.classList.add('hidden');
+        cgpaBox.classList.remove('hidden');
+        cgpaTab.classList.add('tab-active', 'text-white');
+        cgpaTab.classList.remove('text-gray-400');
+        sgpaTab.classList.remove('tab-active', 'text-white');
+        sgpaTab.classList.add('text-gray-400');
+      }
+      
+      resultSection.classList.add('hidden');
+    }
 
-<!-- CGPA -->
-<div id="cgpaBox" style="display:none">
-  <input id="semesterCount" type="number" placeholder="Enter number of semesters">
-  <button onclick="createSemesters()">Create Semesters</button>
+    function createSubjects() {
+      const count = parseInt(document.getElementById('subjectCount').value);
+      const container = document.getElementById('subjectInputs');
+      const calcBtn = document.getElementById('sgpaCalcBtn');
+      
+      if (!count || count < 1 || count > 15) {
+        container.innerHTML = `
+          <div class="glass-card rounded-xl p-4 text-center text-red-400 text-sm">
+            ⚠️ Please enter a valid number between 1 and 15
+          </div>
+        `;
+        calcBtn.classList.add('hidden');
+        return;
+      }
 
-  <div id="semesterInputs"></div>
-  <button onclick="calculateCGPA()">Calculate CGPA</button>
-</div>
+      let html = '';
+      for (let i = 1; i <= count; i++) {
+        html += `
+          <div class="subject-card glass-card glow-border rounded-xl sm:rounded-2xl p-4 sm:p-5" style="animation-delay: ${i * 50}ms">
+            <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <span class="w-8 h-8 rounded-lg icon-badge flex items-center justify-center text-sm font-bold">${i}</span>
+              <span class="font-medium text-gray-200 text-sm">Subject ${i}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
+              <div>
+                <label class="input-label">Credits</label>
+                <input 
+                  id="credit${i}" 
+                  type="number" 
+                  min="1" 
+                  max="10"
+                  placeholder="e.g., 3"
+                  class="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none input-glow transition-all text-sm"
+                >
+              </div>
+              <div>
+                <label class="input-label">Grade</label>
+                <select 
+                  id="grade${i}"
+                  class="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2.5 text-white focus:outline-none input-glow transition-all text-sm cursor-pointer"
+                >
+                  <option value="">Select</option>
+                  <option value="10">O (10)</option>
+                  <option value="9">A+ (9)</option>
+                  <option value="8">A (8)</option>
+                  <option value="7">B+ (7)</option>
+                  <option value="6">B (6)</option>
+                  <option value="5">C (5)</option>
+                  <option value="4">D (4)</option>
+                  <option value="0">F (0)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+      calcBtn.classList.remove('hidden');
+      document.getElementById('resultSection').classList.add('hidden');
+    }
 
-<div class="card">
-  <div id="result" class="result"></div>
-  <div id="explain" class="explain"></div>
-</div>
+    function createSemesters() {
+      const count = parseInt(document.getElementById('semesterCount').value);
+      const container = document.getElementById('semesterInputs');
+      const calcBtn = document.getElementById('cgpaCalcBtn');
+      
+      if (!count || count < 1 || count > 12) {
+        container.innerHTML = `
+          <div class="glass-card rounded-xl p-4 text-center text-red-400 text-sm">
+            ⚠️ Please enter a valid number between 1 and 12
+          </div>
+        `;
+        calcBtn.classList.add('hidden');
+        return;
+      }
 
-</div>
+      let html = '';
+      for (let i = 1; i <= count; i++) {
+        html += `
+          <div class="subject-card glass-card glow-border rounded-xl sm:rounded-2xl p-4 sm:p-5" style="animation-delay: ${i * 50}ms">
+            <div class="flex items-center gap-2 sm:gap-3">
+              <span class="w-8 h-8 rounded-lg icon-badge flex items-center justify-center text-sm font-bold">${i}</span>
+              <span class="font-medium text-gray-200 flex-1 text-sm">Semester ${i}</span>
+              <input 
+                id="sgpa${i}" 
+                type="number" 
+                step="0.01"
+                min="0" 
+                max="10"
+                placeholder="0-10"
+                class="w-20 sm:w-28 bg-slate-800/50 border border-slate-600/50 rounded-lg px-2 sm:px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none input-glow transition-all text-sm text-center"
+              >
+            </div>
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+      calcBtn.classList.remove('hidden');
+      document.getElementById('resultSection').classList.add('hidden');
+    }
 
-<script>
-function switchMode(){
-  sgpaBox.style.display = mode.value==="sgpa" ? "block" : "none";
-  cgpaBox.style.display = mode.value==="cgpa" ? "block" : "none";
-  result.innerHTML="";
-  explain.innerHTML="";
-}
+    function getGradeRemark(gpa) {
+      if (gpa >= 9) return { text: 'Outstanding! 🌟', color: 'text-emerald-400' };
+      if (gpa >= 8) return { text: 'Excellent! 🎉', color: 'text-green-400' };
+      if (gpa >= 7) return { text: 'Very Good! 👏', color: 'text-blue-400' };
+      if (gpa >= 6) return { text: 'Good! 👍', color: 'text-indigo-400' };
+      if (gpa >= 5) return { text: 'Average 📚', color: 'text-yellow-400' };
+      if (gpa >= 4) return { text: 'Pass ✓', color: 'text-orange-400' };
+      return { text: 'Needs Improvement 💪', color: 'text-red-400' };
+    }
 
-function createSubjects(){
-  let n = +subjectCount.value;
-  subjectInputs.innerHTML="";
-  if(n<=0) return;
+    function calculateSGPA() {
+      const count = parseInt(document.getElementById('subjectCount').value);
+      let totalCredits = 0;
+      let totalPoints = 0;
+      let steps = [];
+      let hasError = false;
 
-  for(let i=1;i<=n;i++){
-    subjectInputs.innerHTML += `
-      <div class="card">
-        <b>Subject ${i}</b>
-        <input id="c${i}" placeholder="Credits (eg: 3)">
-        <input id="g${i}" placeholder="Grade Point (10,9,8...)">
-      </div>`;
-  }
-}
+      for (let i = 1; i <= count; i++) {
+        const credit = parseFloat(document.getElementById(`credit${i}`).value);
+        const grade = parseFloat(document.getElementById(`grade${i}`).value);
 
-function calculateSGPA(){
-  let n = +subjectCount.value;
-  let total=0, credits=0;
-  let steps="";
+        if (isNaN(credit) || isNaN(grade) || credit < 1) {
+          hasError = true;
+          break;
+        }
 
-  for(let i=1;i<=n;i++){
-    let c = +document.getElementById("c"+i).value;
-    let g = +document.getElementById("g"+i).value;
-    total += c*g;
-    credits += c;
-    steps += `Subject ${i}: ${g} × ${c} = ${c*g}<br>`;
-  }
+        const points = credit * grade;
+        totalCredits += credit;
+        totalPoints += points;
+        steps.push(`Subject ${i}: ${credit} credits × ${grade} GP = <span class="text-indigo-400 font-semibold">${points}</span>`);
+      }
 
-  let sgpa = (total/credits).toFixed(2);
-  result.innerHTML = `SGPA = ${sgpa}`;
-  explain.innerHTML = `
-    <b>Step-by-step SGPA:</b><br>
-    ${steps}
-    Total = ${total}<br>
-    Total Credits = ${credits}<br>
-    SGPA = ${total} ÷ ${credits} = <b>${sgpa}</b>
-  `;
-}
+      if (hasError || totalCredits === 0) {
+        document.getElementById('resultSection').classList.remove('hidden');
+        document.getElementById('resultValue').textContent = '—';
+        document.getElementById('resultLabel').textContent = 'Invalid Input';
+        document.getElementById('gradeRemark').innerHTML = `<span class="text-red-400 text-sm">Please fill all fields correctly</span>`;
+        document.getElementById('explainContent').innerHTML = '';
+        return;
+      }
 
-function createSemesters(){
-  let n = +semesterCount.value;
-  semesterInputs.innerHTML="";
-  if(n<=0) return;
+      const sgpa = (totalPoints / totalCredits).toFixed(2);
+      const remark = getGradeRemark(parseFloat(sgpa));
 
-  for(let i=1;i<=n;i++){
-    semesterInputs.innerHTML += `
-      <input id="s${i}" placeholder="Semester ${i} SGPA">`;
-  }
-}
+      document.getElementById('resultSection').classList.remove('hidden');
+      document.getElementById('resultValue').textContent = sgpa;
+      document.getElementById('resultLabel').textContent = 'Your SGPA';
+      document.getElementById('gradeRemark').innerHTML = `<span class="${remark.color} font-semibold">${remark.text}</span>`;
+      
+      document.getElementById('explainContent').innerHTML = `
+        ${steps.join('<br>')}
+        <div class="mt-3 pt-3 border-t border-slate-600/50">
+          <div>Total Credit Points: <span class="text-white font-semibold">${totalPoints}</span></div>
+          <div>Total Credits: <span class="text-white font-semibold">${totalCredits}</span></div>
+          <div class="mt-2 text-emerald-400 font-semibold">SGPA = ${totalPoints} ÷ ${totalCredits} = ${sgpa}</div>
+        </div>
+      `;
 
-function calculateCGPA(){
-  let n = +semesterCount.value;
-  let sum=0;
-  let steps="";
+      document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 
-  for(let i=1;i<=n;i++){
-    let v = +document.getElementById("s"+i).value;
-    sum += v;
-    steps += `Semester ${i} SGPA = ${v}<br>`;
-  }
+    function calculateCGPA() {
+      const count = parseInt(document.getElementById('semesterCount').value);
+      let totalSgpa = 0;
+      let steps = [];
+      let hasError = false;
 
-  let cgpa = (sum/n).toFixed(2);
-  result.innerHTML = `CGPA = ${cgpa}`;
-  explain.innerHTML = `
-    <b>Step-by-step CGPA:</b><br>
-    ${steps}
-    CGPA = ${sum} ÷ ${n} = <b>${cgpa}</b>
-  `;
-}
-</script>
+      for (let i = 1; i <= count; i++) {
+        const sgpa = parseFloat(document.getElementById(`sgpa${i}`).value);
 
-</body>
+        if (isNaN(sgpa) || sgpa < 0 || sgpa > 10) {
+          hasError = true;
+          break;
+        }
+
+        totalSgpa += sgpa;
+        steps.push(`Semester ${i}: <span class="text-purple-400 font-semibold">${sgpa.toFixed(2)}</span>`);
+      }
+
+      if (hasError) {
+        document.getElementById('resultSection').classList.remove('hidden');
+        document.getElementById('resultValue').textContent = '—';
+        document.getElementById('resultLabel').textContent = 'Invalid Input';
+        document.getElementById('gradeRemark').innerHTML = `<span class="text-red-400 text-sm">Please enter valid SGPA values (0-10)</span>`;
+        document.getElementById('explainContent').innerHTML = '';
+        return;
+      }
+
+      const cgpa = (totalSgpa / count).toFixed(2);
+      const remark = getGradeRemark(parseFloat(cgpa));
+
+      document.getElementById('resultSection').classList.remove('hidden');
+      document.getElementById('resultValue').textContent = cgpa;
+      document.getElementById('resultLabel').textContent = 'Your CGPA';
+      document.getElementById('gradeRemark').innerHTML = `<span class="${remark.color} font-semibold">${remark.text}</span>`;
+      
+      document.getElementById('explainContent').innerHTML = `
+        ${steps.join('<br>')}
+        <div class="mt-3 pt-3 border-t border-slate-600/50">
+          <div>Sum of all SGPA: <span class="text-white font-semibold">${totalSgpa.toFixed(2)}</span></div>
+          <div>Number of Semesters: <span class="text-white font-semibold">${count}</span></div>
+          <div class="mt-2 text-emerald-400 font-semibold">CGPA = ${totalSgpa.toFixed(2)} ÷ ${count} = ${cgpa}</div>
+        </div>
+      `;
+
+      document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Initialize
+    applyConfig();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d684e283113a8fc',t:'MTc3MjUzNzM4Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
